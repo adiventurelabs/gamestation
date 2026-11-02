@@ -436,3 +436,158 @@ body.ps-console-body {
     font-weight: 600;
     color: #E2E8F0;
 }
+
+/* ==========================================================================
+   PlayStation 5 Ingestion / Installation Modal
+   ========================================================================== */
+.ingestion-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s var(--ease-playstation);
+}
+
+.ingestion-modal.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.ingestion-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, rgba(6, 16, 38, 0.94) 0%, rgba(3, 6, 15, 0.98) 100%);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+}
+
+.ingestion-card {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 48px;
+    background: rgba(14, 23, 44, 0.7);
+    border: 1px solid rgba(0, 169, 224, 0.3);
+    border-radius: 28px;
+    padding: 48px 56px;
+    max-width: 820px;
+    width: 90%;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 112, 209, 0.25);
+    transform: scale(0.95);
+    transition: transform 0.4s var(--ease-playstation);
+}
+
+.ingestion-modal.visible .ingestion-card {
+    transform: scale(1);
+}
+
+/* Circular SVG Progress Ring */
+.ingestion-ring-wrapper {
+    position: relative;
+    width: 160px;
+    height: 160px;
+    flex-shrink: 0;
+}
+
+.ingestion-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.ingestion-circle-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 10;
+}
+
+.ingestion-circle-bar {
+    fill: none;
+    stroke: url(#cyanBlueGrad);
+    stroke: #00A9E0;
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 439.82;
+    stroke-dashoffset: 439.82;
+    transition: stroke-dashoffset 0.25s linear;
+    filter: drop-shadow(0 0 10px rgba(0, 169, 224, 0.7));
+}
+
+.ingestion-percent-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--ps-text-white);
+    text-shadow: 0 0 16px rgba(0, 169, 224, 0.6);
+}
+
+/* Meta Information */
+.ingestion-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ingestion-badge-row {
+    display: flex;
+    gap: 10px;
+}
+
+.ingestion-game-title {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--ps-text-white);
+    letter-spacing: 0.2px;
+    line-height: 1.2;
+}
+
+.ingestion-step-desc {
+    font-size: 15px;
+    color: var(--ps-text-dim);
+    font-weight: 500;
+    min-height: 22px;
+}
+
+/* Horizontal Progress Bar */
+.ingestion-progress-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+    position: relative;
+}
+
+.ingestion-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #0070D1, #00E5FF);
+    border-radius: 4px;
+    box-shadow: 0 0 14px rgba(0, 229, 255, 0.8);
+    transition: width 0.25s linear;
+}
+
+.ingestion-stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--ps-text-dim);
+    font-weight: 600;
+    margin-top: 4px;
+}

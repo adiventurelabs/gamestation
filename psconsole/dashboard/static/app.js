@@ -227,6 +227,18 @@ async function launchSelectedGame() {
     }
 }
 
+// Ingestion Modal DOM
+const ingestionModal = document.getElementById("ingestionModal");
+const ingestionPercent = document.getElementById("ingestionPercent");
+const ingestionPlatform = document.getElementById("ingestionPlatform");
+const ingestionTitle = document.getElementById("ingestionTitle");
+const ingestionStep = document.getElementById("ingestionStep");
+const ingestionProgressBar = document.getElementById("ingestionProgressBar");
+const ingestionSvgRing = document.getElementById("ingestionSvgRing");
+const ingestionBytes = document.getElementById("ingestionBytes");
+const ingestionTime = document.getElementById("ingestionTime");
+let wasIngesting = false;
+
 // ==========================================================================
 // 5. REST Polling & Library Sync
 // ==========================================================================
@@ -234,6 +246,39 @@ async function fetchStatus() {
     try {
         const res = await fetch("/api/status");
         const data = await res.json();
+
+        // Update Ingestion / Installation Modal
+        if (data.ingestion && data.ingestion.is_active) {
+            wasIngesting = true;
+            ingestionModal.classList.add("visible");
+            const pct = Math.max(0, Math.min(100, data.ingestion.progress_percent || 0));
+
+            ingestionPercent.textContent = `${pct}%`;
+            ingestionPlatform.textContent = data.ingestion.platform || "CONSOLE";
+            ingestionTitle.textContent = data.ingestion.game_title || "Installing Disc...";
+            ingestionStep.textContent = data.ingestion.current_step || "Reading optical sectors...";
+            ingestionProgressBar.style.width = `${pct}%`;
+
+            // Circumference of r=70 is ~439.82
+            const offset = 439.82 * (1 - pct / 100);
+            if (ingestionSvgRing) {
+                ingestionSvgRing.style.strokeDashoffset = offset;
+            }
+
+            if (data.ingestion.bytes_read > 0) {
+                const mb = (data.ingestion.bytes_read / (1024 * 1024)).toFixed(1);
+                ingestionBytes.textContent = `${mb} MB transferred`;
+            } else {
+                ingestionBytes.textContent = "Streaming optical data...";
+            }
+            ingestionTime.textContent = `Processing • ${pct}%`;
+        } else {
+            if (wasIngesting) {
+                wasIngesting = false;
+                ingestionModal.classList.remove("visible");
+                fetchLibrary(); // Refresh library with newly cached game
+            }
+        }
 
         // Update disc state
         if (data.disc && data.disc.present) {
@@ -246,7 +291,7 @@ async function fetchStatus() {
             document.getElementById("discCardBadge").textContent = discState.type;
             document.getElementById("discCardType").textContent = discState.serial || "DISC READY";
             document.getElementById("discCardTitle").textContent = discState.title;
-            document.getElementById("discCardSubtitle").textContent = "Press (✕) to Play Disc";
+            document.getElementById("discCardSubtitle").textContent = discState.requires_ingestion ? "Press (✕) to Install & Play" : "Press (✕) to Play Disc";
             document.getElementById("spinningDiscGraphic").classList.add("spinning");
         } else {
             discState = { present: false, title: "No Disc Inserted", type: "OPTICAL", serial: "" };
@@ -257,7 +302,7 @@ async function fetchStatus() {
             document.getElementById("discCardBadge").textContent = "DRIVE D:";
             document.getElementById("discCardType").textContent = "EMPTY";
             document.getElementById("discCardTitle").textContent = "No Disc Inserted";
-            document.getElementById("discCardSubtitle").textContent = "Insert PS1/PS2 Disc";
+            document.getElementById("discCardSubtitle").textContent = "Insert Game Disc";
             document.getElementById("spinningDiscGraphic").classList.remove("spinning");
         }
 
@@ -378,11 +423,15 @@ function pollGamepad() {
             buttonPressed[0] = false;
         }
 
-        // Button 1: Circle / B -> Reset to Disc Slot
+        // Button 1: Circle / B -> Cancel Ingestion or Reset to Disc Slot
         if (gp.buttons[1] && gp.buttons[1].pressed) {
             if (!buttonPressed[1]) {
                 initAudio();
-                updateSelection(0);
+                if (ingestionModal && ingestionModal.classList.contains("visible")) {
+                    fetch("/api/ingestion/cancel", { method: "POST" });
+                } else {
+                    updateSelection(0);
+                }
                 buttonPressed[1] = true;
             }
         } else {
@@ -416,7 +465,11 @@ window.addEventListener("keydown", (e) => {
     } else if (e.key === "Enter" || e.key === " ") {
         launchSelectedGame();
     } else if (e.key === "Escape") {
-        updateSelection(0);
+        if (ingestionModal && ingestionModal.classList.contains("visible")) {
+            fetch("/api/ingestion/cancel", { method: "POST" });
+        } else {
+            updateSelection(0);
+        }
     } else if (e.key.toLowerCase() === "r") {
         fetchLibrary();
     }

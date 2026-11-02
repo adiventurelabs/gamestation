@@ -35,6 +35,8 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             self._handle_get_status()
         elif path == "/api/library":
             self._handle_get_library()
+        elif path == "/api/ingestion/status":
+            self._handle_get_ingestion()
         else:
             # Fallback to static files
             super().do_GET()
@@ -56,6 +58,8 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             self._handle_post_exit()
         elif path == "/api/refresh":
             self._handle_get_library()
+        elif path == "/api/ingestion/cancel":
+            self._handle_cancel_ingestion()
         else:
             self.send_error(404, "Endpoint not found")
 
@@ -65,19 +69,50 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         is_playing = (service.state.value == "PLAYING") if service else False
         active_target = service.launcher.active_target if (service and service.launcher) else None
 
+        ingestion_state = None
+        if service and hasattr(service, "ingestion_pipeline") and service.ingestion_pipeline:
+            try:
+                res = service.ingestion_pipeline.get_state()
+                if isinstance(res, dict):
+                    ingestion_state = res
+            except Exception:
+                pass
+
         data = {
             "is_playing": is_playing,
             "active_game": active_target,
-            "state": service.state.value if service else "IDLE",
+            "state": service.state.value if (service and hasattr(service.state, "value")) else "IDLE",
             "disc": {
                 "present": bool(disc_info and disc_info.is_playable),
-                "type": disc_info.disc_type.value if disc_info else None,
+                "type": disc_info.disc_type.value if (disc_info and hasattr(disc_info.disc_type, "value")) else None,
                 "title": disc_info.title if disc_info else None,
                 "serial": disc_info.serial if disc_info else None,
-                "drive_path": disc_info.drive_path if disc_info else None
-            }
+                "drive_path": disc_info.drive_path if disc_info else None,
+                "requires_ingestion": disc_info.requires_ingestion if disc_info else False
+            },
+            "ingestion": ingestion_state
         }
         self._send_json(data)
+
+    def _handle_get_ingestion(self):
+        service = DashboardAPIHandler.service_ref
+        res = {"is_active": False, "progress_percent": 0}
+        if service and hasattr(service, "ingestion_pipeline") and service.ingestion_pipeline:
+            try:
+                raw_state = service.ingestion_pipeline.get_state()
+                if isinstance(raw_state, dict):
+                    res = raw_state
+            except Exception:
+                pass
+        self._send_json(res)
+
+    def _handle_cancel_ingestion(self):
+        service = DashboardAPIHandler.service_ref
+        if service and hasattr(service, "ingestion_pipeline"):
+            service.ingestion_pipeline.cancel()
+            self._send_json({"success": True})
+        else:
+            self._send_json({"success": False, "error": "No service running"})
 
     def _handle_get_library(self):
         scanner = DashboardAPIHandler.scanner_ref

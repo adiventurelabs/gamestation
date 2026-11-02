@@ -93,6 +93,32 @@
         "-g",
         "{target}"
       ]
+    },
+    "xbox": {
+      "name": "xemu",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\xemu\\xemu.exe",
+        "%LOCALAPPDATA%\\xemu\\xemu.exe",
+        "%PROGRAMFILES%\\xemu\\xemu.exe"
+      ],
+      "cli_args_file": [
+        "-full-screen",
+        "-dvd_path",
+        "{target}"
+      ]
+    },
+    "xbox360": {
+      "name": "Xenia",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\xenia\\xenia.exe",
+        "%LOCALAPPDATA%\\xenia\\xenia_canary.exe",
+        "%LOCALAPPDATA%\\xenia\\xenia.exe",
+        "%PROGRAMFILES%\\xenia\\xenia.exe"
+      ],
+      "cli_args_file": [
+        "--fullscreen",
+        "{target}"
+      ]
     }
   },
   "detector": {
@@ -117,7 +143,9 @@
     "ps1_dir": "%USERPROFILE%\\Games\\PlayStation\\PS1",
     "ps2_dir": "%USERPROFILE%\\Games\\PlayStation\\PS2",
     "ps3_dir": "%USERPROFILE%\\Games\\PlayStation\\PS3",
-    "ps4_dir": "%USERPROFILE%\\Games\\PlayStation\\PS4"
+    "ps4_dir": "%USERPROFILE%\\Games\\PlayStation\\PS4",
+    "xbox_dir": "%USERPROFILE%\\Games\\Xbox\\Original",
+    "xbox360_dir": "%USERPROFILE%\\Games\\Xbox\\Xbox360"
   },
   "logging": {
     "level": "INFO",

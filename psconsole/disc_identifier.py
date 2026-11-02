@@ -19,6 +19,8 @@ class DiscType(Enum):
     PS2 = "PS2"
     PS3 = "PS3"
     PS4 = "PS4"
+    XBOX = "XBOX"
+    XBOX360 = "XBOX360"
     UNSUPPORTED_MEDIA = "UNSUPPORTED"
     UNREADABLE = "UNREADABLE"
     EMPTY = "EMPTY"
@@ -38,7 +40,14 @@ class DiscInfo:
 
     @property
     def is_playable(self) -> bool:
-        return self.disc_type in (DiscType.PS1, DiscType.PS2, DiscType.PS3, DiscType.PS4)
+        return self.disc_type in (
+            DiscType.PS1, DiscType.PS2, DiscType.PS3,
+            DiscType.PS4, DiscType.XBOX, DiscType.XBOX360
+        )
+
+    @property
+    def requires_ingestion(self) -> bool:
+        return self.disc_type in (DiscType.XBOX, DiscType.XBOX360, DiscType.PS4)
 
 
 class DiscIdentifier:
@@ -198,10 +207,11 @@ class DiscIdentifier:
                 volume_label=volume_label
             )
 
-        # 2. PlayStation 4 Check (sce_sys/param.sfo or app0/eboot.bin)
+        # 2. PlayStation 4 Check (sce_sys/param.sfo, CUSA volume labels, or eboot.bin)
         ps4_sce = os.path.join(drive_path, "sce_sys")
         ps4_eboot = self.find_file_case_insensitive(drive_path, "eboot.bin")
-        if os.path.isdir(ps4_sce) or ps4_eboot:
+        clean_vol = (volume_label or "").upper()
+        if os.path.isdir(ps4_sce) or ps4_eboot or ("CUSA" in clean_vol) or ("PS4" in clean_vol):
             title = "PlayStation 4 Title"
             serial = None
             sfo_data = {}
@@ -215,16 +225,46 @@ class DiscIdentifier:
                 except Exception:
                     pass
 
+            if not serial and "CUSA" in clean_vol:
+                match = re.search(r"CUSA[-_]?\d{5}", clean_vol)
+                if match:
+                    serial = match.group(0).replace("_", "-")
+
             return DiscInfo(
                 drive_path=drive_path,
                 disc_type=DiscType.PS4,
                 serial=normalize_serial(serial) if serial else None,
-                title=title,
+                title=title if title != "PlayStation 4 Title" else (volume_label or "PlayStation 4 Game"),
                 sfo_params=sfo_data,
                 volume_label=volume_label
             )
 
-        # 3. PlayStation 1 & 2 Check via SYSTEM.CNF
+        # 3. Xbox 360 Check (default.xex, $SystemUpdate, or XBOX360 volume label)
+        has_default_xex = bool(self.find_file_case_insensitive(drive_path, "default.xex"))
+        has_sys_update = self.find_directory_case_insensitive(drive_path, "$SystemUpdate")
+        if has_default_xex or has_sys_update or ("XBOX360" in clean_vol) or ("XBOX 360" in clean_vol):
+            title = f"Xbox 360 Game: {volume_label}" if volume_label else "Xbox 360 Game"
+            return DiscInfo(
+                drive_path=drive_path,
+                disc_type=DiscType.XBOX360,
+                title=title,
+                executable="default.xex" if has_default_xex else None,
+                volume_label=volume_label
+            )
+
+        # 4. Xbox (Original) Check (default.xbe or XBOX volume label)
+        has_default_xbe = bool(self.find_file_case_insensitive(drive_path, "default.xbe"))
+        if has_default_xbe or ("XBOX" in clean_vol and "360" not in clean_vol):
+            title = f"Xbox Game: {volume_label}" if volume_label else "Xbox Game"
+            return DiscInfo(
+                drive_path=drive_path,
+                disc_type=DiscType.XBOX,
+                title=title,
+                executable="default.xbe" if has_default_xbe else None,
+                volume_label=volume_label
+            )
+
+        # 5. PlayStation 1 & 2 Check via SYSTEM.CNF
         system_cnf_path = self.find_file_case_insensitive(drive_path, "SYSTEM.CNF")
         if system_cnf_path and os.path.isfile(system_cnf_path):
             try:
@@ -309,13 +349,13 @@ class DiscIdentifier:
                 volume_label=volume_label
             )
 
-        # 6. Unknown / Unsupported Media
+        # 7. Unknown / Unsupported Media
         return DiscInfo(
             drive_path=drive_path,
             disc_type=DiscType.UNSUPPORTED_MEDIA,
             title="Unsupported Disc",
             volume_label=volume_label,
-            error_message="Inserted disc is not recognized as a PlayStation 1, 2, or 3 game disc."
+            error_message="Inserted disc is not recognized as a supported PlayStation or Xbox console game disc."
         )
 
     def _scan_for_serial_file(self, file_entries: List[str]) -> Optional[str]:

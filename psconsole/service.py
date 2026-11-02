@@ -19,11 +19,13 @@ from .emulator_launcher import EmulatorLauncher, LaunchStatus
 from .controller_monitor import ControllerMonitor
 from .ui_overlay import UIOverlay
 from .dashboard.server import DashboardServer
+from .ingestion_pipeline import IngestionPipeline
 
 
 class ServiceState(Enum):
     IDLE = "IDLE"
     ANALYZING = "ANALYZING"
+    INGESTING = "INGESTING"
     LAUNCHING = "LAUNCHING"
     PLAYING = "PLAYING"
 
@@ -72,6 +74,9 @@ class PSConsoleService:
             on_exit_requested=self.handle_controller_exit,
             logger=self.logger
         )
+
+        # Ingestion Pipeline for offline disc ripping/extraction
+        self.ingestion_pipeline = IngestionPipeline(self.config, logger=self.logger)
 
         # Dashboard Server
         dash_cfg = self.config.get("dashboard", {})
@@ -126,6 +131,9 @@ class PSConsoleService:
         if self.state == ServiceState.PLAYING:
             self.launcher.stop_active_emulator()
 
+        if hasattr(self, "ingestion_pipeline") and self.ingestion_pipeline.is_ingesting():
+            self.ingestion_pipeline.cancel()
+
         if self.dashboard:
             self.dashboard.stop()
 
@@ -170,9 +178,50 @@ class PSConsoleService:
         self.logger.info(f"Disc Identification result: {disc_info.disc_type.value} | Title: {disc_info.title} | Serial: {disc_info.serial}")
 
         if disc_info.is_playable:
-            # Show TV-safe launch toast
+            # Check if disc requires offline toolchain ingestion (PS4, Xbox, Xbox 360)
+            if disc_info.requires_ingestion:
+                self.logger.info(f"{disc_info.disc_type.value} disc detected requiring offline ingestion: '{disc_info.title}'")
+                self.state = ServiceState.INGESTING
+
+                toast_sec = self.config.get("ui", {}).get("toast_duration_seconds", 3.5)
+                self.overlay.show_launch_toast(
+                    title=f"{disc_info.disc_type.value} Installation Started",
+                    subtitle=disc_info.title,
+                    serial=disc_info.serial,
+                    disc_type=disc_info.disc_type.value,
+                    duration_sec=toast_sec
+                )
+
+                def _on_ingestion_finished(platform: str, output_path: str, title: str):
+                    self.logger.info(f"Ingestion complete for '{title}' -> {output_path}. Initiating emulator boot...")
+                    self.state = ServiceState.LAUNCHING
+                    res = self.launcher.launch_digital_game(platform, output_path, title)
+                    if res.status == LaunchStatus.SUCCESS:
+                        self.logger.info(f"Successfully launched ingested {platform} game '{title}'")
+                        self.state = ServiceState.PLAYING
+                    else:
+                        self.logger.error(f"Failed to launch ingested game: {res.error_message}")
+                        self.overlay.show_error_screen(
+                            title="Launch Failed",
+                            message=f"Could not boot ingested game: {res.error_message or 'Unknown error'}",
+                            duration_sec=6.0
+                        )
+                        self.state = ServiceState.IDLE
+
+                self.ingestion_pipeline.start_ingestion(disc_info, on_complete=_on_ingestion_finished)
+                return
+
+            # Direct Disc Launch for PS1, PS2, PS3
             toast_sec = self.config.get("ui", {}).get("toast_duration_seconds", 3.5)
-            gen_label = "PlayStation" if disc_info.disc_type == DiscType.PS1 else "PlayStation 2"
+            gen_label_map = {
+                DiscType.PS1: "PlayStation",
+                DiscType.PS2: "PlayStation 2",
+                DiscType.PS3: "PlayStation 3",
+                DiscType.PS4: "PlayStation 4",
+                DiscType.XBOX: "Xbox",
+                DiscType.XBOX360: "Xbox 360"
+            }
+            gen_label = gen_label_map.get(disc_info.disc_type, disc_info.disc_type.value)
             self.overlay.show_launch_toast(
                 title=f"{gen_label} Disc Detected",
                 subtitle=disc_info.title,

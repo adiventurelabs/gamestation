@@ -103,6 +103,38 @@
         </div>
     </footer>
 
+    <!-- Fullscreen PS5-Quality Disc Ingestion / Loading Screen -->
+    <div class="ingestion-modal" id="ingestionModal">
+        <div class="ingestion-backdrop"></div>
+        <div class="ingestion-card">
+            <div class="ingestion-ring-wrapper">
+                <svg class="ingestion-svg" viewBox="0 0 160 160">
+                    <circle class="ingestion-circle-bg" cx="80" cy="80" r="70"></circle>
+                    <circle class="ingestion-circle-bar" id="ingestionSvgRing" cx="80" cy="80" r="70"></circle>
+                </svg>
+                <div class="ingestion-percent-text" id="ingestionPercent">0%</div>
+            </div>
+
+            <div class="ingestion-info">
+                <div class="ingestion-badge-row">
+                    <span class="platform-badge" id="ingestionPlatform">XBOX 360</span>
+                    <span class="format-badge">OFFLINE INGESTION</span>
+                </div>
+                <h2 class="ingestion-game-title" id="ingestionTitle">Game Title</h2>
+                <div class="ingestion-step-desc" id="ingestionStep">Reading optical disc sectors...</div>
+
+                <div class="ingestion-progress-track">
+                    <div class="ingestion-progress-fill" id="ingestionProgressBar" style="width: 0%;"></div>
+                </div>
+
+                <div class="ingestion-stats-row">
+                    <span class="stat-detail" id="ingestionBytes">Streaming optical sectors...</span>
+                    <span class="stat-detail" id="ingestionTime">Elapsed: 0.0s</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

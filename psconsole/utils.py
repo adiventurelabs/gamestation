@@ -38,6 +38,10 @@ def expand_windows_path(path: str) -> str:
         }
         for var, sub in replacements.items():
             expanded = expanded.replace(var, sub)
+
+    if not IS_WINDOWS:
+        expanded = expanded.replace("\\", "/")
+
     return os.path.normpath(expanded)
 
 

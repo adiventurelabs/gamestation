@@ -62,6 +62,14 @@ class LibraryScanner:
             "PS4": [
                 expand_windows_path(lib_cfg.get("ps4_dir", os.path.join(default_base, "ps4"))),
                 os.path.join(demo_base, "ps4")
+            ],
+            "XBOX": [
+                expand_windows_path(lib_cfg.get("xbox_dir", os.path.join(default_base, "xbox"))),
+                os.path.join(demo_base, "xbox")
+            ],
+            "XBOX360": [
+                expand_windows_path(lib_cfg.get("xbox360_dir", os.path.join(default_base, "xbox360"))),
+                os.path.join(demo_base, "xbox360")
             ]
         }
 
@@ -104,6 +112,45 @@ class LibraryScanner:
                                 serial=serial
                             )
                             games.append(game)
+                    elif platform == "PS4":
+                        eboot_path = os.path.join(full_path, "eboot.bin")
+                        if os.path.isfile(eboot_path):
+                            size_mb = self._get_folder_size_mb(full_path)
+                            clean_name = item.replace("_", " ").title()
+                            games.append(LibraryGame(
+                                id=f"ps4_{item.lower()}",
+                                title=clean_name,
+                                platform="PS4",
+                                file_path=eboot_path,
+                                file_size_mb=round(size_mb, 1),
+                                format="FOLDER"
+                            ))
+                    elif platform == "XBOX":
+                        xbe_path = os.path.join(full_path, "default.xbe")
+                        if os.path.isfile(xbe_path):
+                            size_mb = self._get_folder_size_mb(full_path)
+                            clean_name = item.replace("_", " ").title()
+                            games.append(LibraryGame(
+                                id=f"xbox_{item.lower()}",
+                                title=clean_name,
+                                platform="XBOX",
+                                file_path=xbe_path,
+                                file_size_mb=round(size_mb, 1),
+                                format="FOLDER"
+                            ))
+                    elif platform == "XBOX360":
+                        xex_path = os.path.join(full_path, "default.xex")
+                        if os.path.isfile(xex_path):
+                            size_mb = self._get_folder_size_mb(full_path)
+                            clean_name = item.replace("_", " ").title()
+                            games.append(LibraryGame(
+                                id=f"xbox360_{item.lower()}",
+                                title=clean_name,
+                                platform="XBOX360",
+                                file_path=xex_path,
+                                file_size_mb=round(size_mb, 1),
+                                format="FOLDER"
+                            ))
                     continue
 
                 ext = os.path.splitext(item)[1].lower()
@@ -113,7 +160,9 @@ class LibraryScanner:
                     "PS1": [".cue", ".chd", ".iso", ".pbp"],
                     "PS2": [".iso", ".chd", ".cso", ".bin"],
                     "PS3": [".iso", ".pkg"],
-                    "PS4": [".pkg", ".bin"]
+                    "PS4": [".pkg", ".bin"],
+                    "XBOX": [".iso", ".xbe"],
+                    "XBOX360": [".iso", ".xex"]
                 }.get(platform, [])
 
                 if ext in valid_exts:

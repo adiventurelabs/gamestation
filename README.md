@@ -26,18 +26,30 @@ This entire system runs natively on **Windows 10 / 11**.
 - Authentic PlayStation sound effects synthesized live via the browser's Web Audio API (zero external audio files needed).
 - Flowing PlayStation ribbon particle wave background.
 
-### 3. Integrated Multi-Generation Support
+### 3. Integrated Multi-Generation & Cross-Console Support
 - **PlayStation 1:** DuckStation (`-batch -fullscreen -- "D:\"` or `.cue`/`.chd`).
 - **PlayStation 2:** PCSX2 Qt (`-batch -fullscreen -disc "D:\"` or `.iso`/`.chd`).
 - **PlayStation 3:** RPCS3 (`--fullscreen "D:\"` or digital game folder with `PS3_GAME/PARAM.SFO`).
-- **PlayStation 4:** shadPS4 / fpPS4 (`-g "<PATH_TO_PKG_OR_EBOOT>"`). *(See [docs/PS4_STATUS_AND_LIMITATIONS.md](docs/PS4_STATUS_AND_LIMITATIONS.md) for why retail PS4 discs require digital dumps).*
+- **PlayStation 4:** shadPS4 / fpPS4 (`-g "<PATH_TO_PKG_OR_EBOOT>"`).
+- **Xbox (Original):** Xemu (`-full-screen -dvd_path "<PATH_TO_XBE_OR_ISO>"`).
+- **Xbox 360:** Xenia / Xenia Canary (`--fullscreen "<PATH_TO_XEX_OR_ISO>"`).
 
-### 4. Bundled Open-Source Test Games
+### 4. Unified Offline Disc Ingestion Pipeline (PS5 Quality Interface)
+For discs that are not plug-and-play in standard PC optical drives (PS4 encrypted Blu-rays, Xbox/Xbox 360 split-partition DVDs):
+- The detector automatically recognizes the media signature and launches the **Offline Ingestion Pipeline**.
+- The PlayStation Dashboard displays an authentic **PlayStation 5 style "LOADING %..."** modal with:
+  - Cyan-blue radial SVG progress spinner ring.
+  - Live percentage readout (0% to 100%).
+  - Real-time sector extraction throughput and elapsed time.
+  - Automatic transition to fullscreen emulator upon extraction completion.
+  - Controller cancel support (Circle / B).
+
+### 5. Bundled Open-Source Test Games
 Included out of the box in `demo_games/` for immediate testing:
 - **PS1:** *240p Test Suite for PS1* by Filip Aláč (`demo_games/ps1/240pTestSuitePS1-EMU.cue`).
 - **PS2:** *FreeDVDBoot Homebrew* by CTurt (`demo_games/ps2/FreeDVDBoot_PS2_Slim.iso`).
 
-### 5. Deliberate Controller Exit
+### 6. Deliberate Controller Exit
 - Hold `Select/Back` + `Start` for 1.8 seconds on your gamepad during any game to cleanly save state, close the emulator via `WM_CLOSE`, and return instantly to the PlayStation Dashboard.
 
 ---
@@ -180,7 +192,7 @@ To stop the service or completely remove it:
 
 ## Test Results
 
-The detection, parsing, state machine, and launch logic have been verified with **29 automated tests** (unit + end-to-end integration):
+The detection, parsing, state machine, ingestion, and launch logic have been verified with **42 automated tests** (unit + end-to-end integration):
 
 ```bash
 python3 run_integration_tests.py
@@ -188,27 +200,31 @@ python3 run_integration_tests.py
 
 ```
 ======================================================================
-Tests executed: 29
-Passed:         29
+   PlayStation Console Automation - Full Integration Test Suite
+======================================================================
+Tests executed: 42
+Passed:         42
 Failures:       0
 Errors:         0
-Elapsed Time:   0.063 seconds
+Elapsed Time:   2.600 seconds
 ======================================================================
 
 >>> ALL INTEGRATION AND UNIT TESTS PASSED SUCCESSFULLY! <<<
 ```
 
 ### What Passed:
+- **Offline Disc Ingestion Pipeline:** Auto-triggers ingestion for Xbox, Xbox 360, and PS4 media, monitors streaming byte transfer, builds emulator boot files (`default.xbe`, `default.xex`, `eboot.bin`), and executes completion callback.
 - **Dynamic Disc Insertion Simulation:** Auto-detects dummy disc files created on-the-fly (`SYSTEM.CNF` with correct PS1/PS2 parameters).
 - **Disc Pre-Inserted at Boot:** Confirms `check_initial_discs()` finds and boots discs already present at startup.
 - **Disc Ejection & Multi-Disc Swap:** Seamlessly transitions from PS1 disc playback to controller exit, ejection, and PS2 disc insertion.
-- **Disc Generation Detection:** Accurately distinguishes PS1 (`BOOT`) vs PS2 (`BOOT2`).
+- **Disc Generation Detection:** Accurately distinguishes PS1 (`BOOT`), PS2 (`BOOT2`), PS3 (`PS3_DISC.SFB`), PS4 (`sce_sys`), Xbox (`default.xbe`), and Xbox 360 (`default.xex`, `$SystemUpdate`).
 - **Early PS1 Fallback:** Detects early PS1 discs lacking `SYSTEM.CNF` via root `PSX.EXE` and serial executable scans.
 - **Serial Normalization & Title Resolution:** Matches raw serials (e.g., `cdrom0:\SLUS_200.62;1`) to official friendly titles (*Final Fantasy X*).
 - **Non-Game Media Rejection:** Identifies DVD-Video movies (`VIDEO_TS`) and Audio CDs, displaying controller error screens without crashing.
 - **Hardware Bounce Debouncing:** Rapid multi-event bursts (5 events within 500ms) trigger emulator launch exactly once.
 - **Session Protection:** Inserting or ejecting discs during active gameplay does not disrupt the running game.
 - **Clean Controller Exit & Focus Restore:** 1.8-second deliberate shortcut (`Select + Start`) cleanly stops emulator via `WM_CLOSE` and restores launcher focus.
+- **REST API & Dashboard Server:** Verifies `/api/status`, `/api/library`, `/api/launch`, `/api/ingestion/status`, and `/api/ingestion/cancel`.
 
 ### What Remains to Verify on Physical Hardware:
 - **Physical Optical Drive:** Requires an external USB optical drive plugged into the Acer Helios 300 to confirm laser seek and spin-up behavior with retail pressed discs.

@@ -61,7 +61,9 @@ class EmulatorLauncher:
             "ps1": ["duckstation-qt.exe", "duckstation-qt"],
             "ps2": ["pcsx2-qt.exe", "pcsx2.exe", "pcsx2-qt"],
             "ps3": ["rpcs3.exe", "rpcs3"],
-            "ps4": ["shadPS4.exe", "shadps4", "fpPS4.exe"]
+            "ps4": ["shadPS4.exe", "shadps4", "fpPS4.exe"],
+            "xbox": ["xemu.exe", "xemu"],
+            "xbox360": ["xenia.exe", "xenia_canary.exe", "xenia"]
         }
         for b_name in binary_map.get(key, []):
             found = self._which(b_name)
@@ -76,8 +78,8 @@ class EmulatorLauncher:
         Returns (is_found, bios_directory_checked).
         """
         key = platform_name.lower()
-        if key in ("ps3", "ps4"):
-            # PS3 and PS4 use firmware packages rather than raw BIOS files
+        if key in ("ps3", "ps4", "xbox", "xbox360"):
+            # PS3, PS4, Xbox, and Xbox360 manage firmware/runtime internally
             return True, "firmware"
 
         emu_cfg = self.config.get("emulators", {}).get(key, {})
@@ -116,6 +118,10 @@ class EmulatorLauncher:
             cmd.extend(["--fullscreen", drive_root])
         elif disc_info.disc_type == DiscType.PS4:
             cmd.extend(["-g", drive_root])
+        elif disc_info.disc_type == DiscType.XBOX:
+            cmd.extend(["-full-screen", "-dvd_path", drive_root])
+        elif disc_info.disc_type == DiscType.XBOX360:
+            cmd.extend(["--fullscreen", drive_root])
 
         return cmd
 
@@ -134,6 +140,10 @@ class EmulatorLauncher:
             cmd.extend(["--fullscreen", file_path])
         elif key == "ps4":
             cmd.extend(["-g", file_path])
+        elif key == "xbox":
+            cmd.extend(["-full-screen", "-dvd_path", file_path])
+        elif key == "xbox360":
+            cmd.extend(["--fullscreen", file_path])
 
         return cmd
 

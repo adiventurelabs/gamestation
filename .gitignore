@@ -33,3 +33,6 @@ Thumbs.db
 # Local logs
 *.log
 psconsole_overlay_state.pid
+
+# Ingested game library cache
+library/
