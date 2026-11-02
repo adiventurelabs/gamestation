@@ -235,7 +235,8 @@ class PSConsoleService:
             res = self.launcher.launch(disc_info)
 
             if res.status == LaunchStatus.SUCCESS:
-                self.logger.info(f"Successfully launched {res.emulator_name} for '{disc_info.title}' (PID: {res.process.pid})")
+                pid_desc = f"(PID: {res.process.pid})" if (res.process and hasattr(res.process, "pid")) else "(Simulated)"
+                self.logger.info(f"Successfully launched {res.emulator_name} for '{disc_info.title}' {pid_desc}")
                 self.state = ServiceState.PLAYING
             elif res.status == LaunchStatus.BIOS_MISSING:
                 self.logger.error(f"Cannot launch: {res.error_message}")
@@ -289,14 +290,13 @@ class PSConsoleService:
             self.logger.warning("Active game disc was ejected during gameplay session. Emulator will manage drive I/O; user can exit via controller.")
 
     def handle_controller_exit(self):
-        """Triggered when user holds the deliberate controller exit shortcut."""
+        """Triggered when user holds the deliberate controller exit shortcut or taps exit."""
         self.overlay.close_active_overlay()
-        if self.state == ServiceState.PLAYING:
-            self.logger.info("Deliberate controller exit shortcut triggered. Closing active emulator gracefully...")
-            self.launcher.stop_active_emulator()
-            self.state = ServiceState.IDLE
-            self.current_disc_info = None
-            self.logger.info("Session ended; returned to console launcher.")
+        self.logger.info("Deliberate controller exit shortcut triggered. Closing active emulator gracefully...")
+        self.launcher.stop_active_emulator()
+        self.state = ServiceState.IDLE
+        self.current_disc_info = None
+        self.logger.info("Session ended; returned to console launcher.")
 
 
 def main():

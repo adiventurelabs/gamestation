@@ -43,6 +43,8 @@ class EmulatorLauncher:
         self.logger = logger
         self.active_process: Optional[subprocess.Popen] = None
         self.active_target: Optional[str] = None
+        self.active_platform: Optional[str] = None
+        self.is_simulated: bool = False
         self.saved_launcher_hwnd: int = 0
 
     def find_emulator_executable(self, platform_name: str) -> Optional[str]:
@@ -154,6 +156,8 @@ class EmulatorLauncher:
         emu_name = self._get_emulator_name(platform)
 
         if not exe_path:
+            if self.config.get("allow_simulation", False):
+                return self._start_simulated_session(platform, emu_name, disc_info.title)
             return LaunchResult(
                 status=LaunchStatus.EMULATOR_NOT_FOUND,
                 emulator_name=emu_name,
@@ -175,7 +179,7 @@ class EmulatorLauncher:
 
     def launch_digital_game(self, platform: str, file_path: str, title: str = "Digital Game") -> LaunchResult:
         """Launches a digital game from the library."""
-        if not os.path.exists(file_path):
+        if not os.path.exists(file_path) and not self.config.get("allow_simulation", False):
             return LaunchResult(
                 status=LaunchStatus.FILE_NOT_FOUND,
                 emulator_name=platform,
@@ -187,6 +191,8 @@ class EmulatorLauncher:
         emu_name = self._get_emulator_name(platform)
 
         if not exe_path:
+            if self.config.get("allow_simulation", False):
+                return self._start_simulated_session(platform, emu_name, title)
             return LaunchResult(
                 status=LaunchStatus.EMULATOR_NOT_FOUND,
                 emulator_name=emu_name,
@@ -196,6 +202,25 @@ class EmulatorLauncher:
 
         cmd = self.build_command_file(platform, file_path, exe_path)
         return self._spawn_process(cmd, emu_name, target_desc=title)
+
+    def _start_simulated_session(self, platform: str, emu_name: str, target_desc: str) -> LaunchResult:
+        if self.is_emulator_running():
+            return LaunchResult(
+                status=LaunchStatus.ALREADY_RUNNING,
+                emulator_name=emu_name,
+                command=[],
+                error_message="Another game is already running."
+            )
+        self.is_simulated = True
+        self.active_target = target_desc
+        self.active_platform = platform.upper()
+        if self.logger:
+            self.logger.info(f"[Simulation Session] Started active gameplay for '{target_desc}' ({platform})")
+        return LaunchResult(
+            status=LaunchStatus.SUCCESS,
+            emulator_name=emu_name,
+            command=[f"simulated_{emu_name.lower()}"]
+        )
 
     def _spawn_process(self, cmd: List[str], emu_name: str, target_desc: str) -> LaunchResult:
         if self.is_emulator_running():
@@ -240,17 +265,28 @@ class EmulatorLauncher:
 
     def is_emulator_running(self) -> bool:
         """Checks whether the currently managed emulator process is still active."""
+        if self.is_simulated and self.active_target:
+            return True
         if not self.active_process:
             return False
         ret = self.active_process.poll()
         if ret is not None:
             self.active_process = None
             self.active_target = None
+            self.active_platform = None
             return False
         return True
 
     def stop_active_emulator(self) -> bool:
         """Gracefully closes active emulator via WM_CLOSE, flushes saves, and restores focus."""
+        if self.is_simulated:
+            self.is_simulated = False
+            self.active_target = None
+            self.active_platform = None
+            if self.logger:
+                self.logger.info("Simulated gameplay session closed.")
+            return True
+
         if not self.active_process:
             return True
 

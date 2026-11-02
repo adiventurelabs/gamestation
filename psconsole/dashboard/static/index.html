@@ -180,6 +180,40 @@
         </div>
     </div>
 
+    <!-- Fullscreen Active Gameplay Screen (iPad / TV Simulation) -->
+    <div class="gameplay-viewport" id="gameplayViewport">
+        <div class="gameplay-tv-screen">
+            <div class="crt-scanlines"></div>
+            <div class="gameplay-hud-top">
+                <span class="platform-badge" id="gameplayPlatform">PLAYSTATION 2</span>
+                <div class="gameplay-meta-title">
+                    <h2 id="gameplayTitle">Active Game Title</h2>
+                    <span class="gameplay-fps-badge"><span class="fps-dot"></span> 60.0 FPS • DIRECT PASS-THROUGH</span>
+                </div>
+                <button class="gameplay-exit-btn" id="btnExitGameplay">✕ Exit Game</button>
+            </div>
+
+            <div class="gameplay-screen-body">
+                <div class="gameplay-visual-card">
+                    <div class="gameplay-art-glow" id="gameplayArtGlow"></div>
+                    <div class="gameplay-icon-large" id="gameplayIconLarge">🎮</div>
+                    <h1 class="gameplay-large-title" id="gameplayLargeTitle">Shadow of the Colossus</h1>
+                    <p class="gameplay-active-status">SESSION ACTIVE • FULLSCREEN PLAY</p>
+                    <div class="gameplay-audio-wave">
+                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gameplay-hud-bottom">
+                <div class="gameplay-instruction">
+                    <span class="ps-btn ps-btn-circle">○</span>
+                    <span>Tap <strong>Exit Game</strong> or press <strong>○ (Circle)</strong> / <strong>Escape</strong> to return to Dashboard</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
 </body>
 </html>

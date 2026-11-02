@@ -195,7 +195,9 @@ async function launchSelectedGame() {
                 body: JSON.stringify({ type: "disc" })
             });
             const data = await res.json();
-            if (!data.success) {
+            if (data.success) {
+                setTimeout(fetchStatus, 150);
+            } else {
                 alert(`Could not start disc: ${data.error || data.status}`);
             }
         } catch (e) {
@@ -218,7 +220,9 @@ async function launchSelectedGame() {
                 })
             });
             const data = await res.json();
-            if (!data.success) {
+            if (data.success) {
+                setTimeout(fetchStatus, 150);
+            } else {
                 alert(`Could not launch ${game.title}: ${data.error || data.status}`);
             }
         } catch (e) {
@@ -239,6 +243,14 @@ const ingestionBytes = document.getElementById("ingestionBytes");
 const ingestionTime = document.getElementById("ingestionTime");
 let wasIngesting = false;
 
+// Gameplay Viewport DOM
+const gameplayViewport = document.getElementById("gameplayViewport");
+const gameplayPlatform = document.getElementById("gameplayPlatform");
+const gameplayTitle = document.getElementById("gameplayTitle");
+const gameplayLargeTitle = document.getElementById("gameplayLargeTitle");
+const gameplayIconLarge = document.getElementById("gameplayIconLarge");
+const btnExitGameplay = document.getElementById("btnExitGameplay");
+
 // ==========================================================================
 // 5. REST Polling & Library Sync
 // ==========================================================================
@@ -246,6 +258,26 @@ async function fetchStatus() {
     try {
         const res = await fetch("/api/status");
         const data = await res.json();
+
+        // Update Gameplay Session Viewport
+        if (data.is_playing) {
+            gameplayViewport.classList.add("active");
+            gameplayTitle.textContent = data.active_game || "Console Game";
+            gameplayLargeTitle.textContent = data.active_game || "Console Game";
+            const plat = (data.active_platform || "CONSOLE").toUpperCase();
+            gameplayPlatform.textContent = plat;
+            const iconMap = {
+                "PS1": "🕹️",
+                "PS2": "🎮",
+                "PS3": "⚡",
+                "PS4": "🩸",
+                "XBOX": "🏎️",
+                "XBOX360": "🏎️"
+            };
+            gameplayIconLarge.textContent = iconMap[plat] || "🎮";
+        } else {
+            gameplayViewport.classList.remove("active");
+        }
 
         // Update Ingestion / Installation Modal
         if (data.ingestion && data.ingestion.is_active) {
@@ -427,11 +459,14 @@ function pollGamepad() {
             buttonPressed[0] = false;
         }
 
-        // Button 1: Circle / B -> Cancel Ingestion or Reset to Disc Slot
+        // Button 1: Circle / B -> Exit Game, Cancel Ingestion, or Reset to Disc Slot
         if (gp.buttons[1] && gp.buttons[1].pressed) {
             if (!buttonPressed[1]) {
                 initAudio();
-                if (ingestionModal && ingestionModal.classList.contains("visible")) {
+                if (gameplayViewport && gameplayViewport.classList.contains("active")) {
+                    fetch("/api/exit", { method: "POST" });
+                    setTimeout(fetchStatus, 200);
+                } else if (ingestionModal && ingestionModal.classList.contains("visible")) {
                     fetch("/api/ingestion/cancel", { method: "POST" });
                 } else {
                     updateSelection(0);
@@ -469,7 +504,10 @@ window.addEventListener("keydown", (e) => {
     } else if (e.key === "Enter" || e.key === " ") {
         launchSelectedGame();
     } else if (e.key === "Escape") {
-        if (ingestionModal && ingestionModal.classList.contains("visible")) {
+        if (gameplayViewport && gameplayViewport.classList.contains("active")) {
+            fetch("/api/exit", { method: "POST" });
+            setTimeout(fetchStatus, 200);
+        } else if (ingestionModal && ingestionModal.classList.contains("visible")) {
             fetch("/api/ingestion/cancel", { method: "POST" });
         } else {
             updateSelection(0);
@@ -560,6 +598,15 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     if (btnPromptSquare) btnPromptSquare.addEventListener("click", openTestDiscModal);
     if (btnPromptRefresh) btnPromptRefresh.addEventListener("click", () => { initAudio(); fetchLibrary(); });
+
+    // Exit Gameplay Viewport
+    if (btnExitGameplay) {
+        btnExitGameplay.addEventListener("click", async () => {
+            initAudio();
+            await fetch("/api/exit", { method: "POST" });
+            setTimeout(fetchStatus, 200);
+        });
+    }
 
     // Disc Simulation Action Buttons
     document.querySelectorAll(".disc-sim-btn").forEach((btn) => {

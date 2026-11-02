@@ -749,3 +749,196 @@ body.ps-console-body {
     background: rgba(239, 68, 68, 0.25);
     border-color: #EF4444;
 }
+
+/* ==========================================================================
+   Active Gameplay Viewport (TV / iPad Game Simulation)
+   ========================================================================== */
+.gameplay-viewport {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 90;
+    background: #02040A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s var(--ease-playstation);
+}
+
+.gameplay-viewport.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.gameplay-tv-screen {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 36px 56px;
+    box-sizing: border-box;
+    position: relative;
+    background: radial-gradient(circle at center, #0B1429 0%, #03060F 100%);
+    overflow: hidden;
+}
+
+.crt-scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    opacity: 0.4;
+    z-index: 1;
+}
+
+.gameplay-hud-top {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.gameplay-meta-title h2 {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--ps-text-white);
+}
+
+.gameplay-fps-badge {
+    font-size: 12px;
+    font-weight: 700;
+    color: #10B981;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+}
+
+.fps-dot {
+    width: 7px;
+    height: 7px;
+    background: #10B981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10B981;
+    animation: pulse 1.5s infinite;
+}
+
+.gameplay-exit-btn {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    color: #FCA5A5;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gameplay-exit-btn:hover, .gameplay-exit-btn:active {
+    background: #EF4444;
+    color: #FFFFFF;
+    transform: scale(1.04);
+}
+
+.gameplay-screen-body {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+}
+
+.gameplay-visual-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    position: relative;
+}
+
+.gameplay-icon-large {
+    font-size: 96px;
+    filter: drop-shadow(0 0 30px rgba(0, 169, 224, 0.8));
+    margin-bottom: 16px;
+    animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.gameplay-large-title {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--ps-text-white);
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(0, 112, 209, 0.5);
+}
+
+.gameplay-active-status {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--ps-cyan-glow);
+    margin-bottom: 24px;
+}
+
+.gameplay-audio-wave {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 36px;
+}
+
+.gameplay-audio-wave span {
+    width: 6px;
+    background: var(--ps-blue-bright);
+    border-radius: 3px;
+    animation: audioWave 1.2s ease-in-out infinite;
+}
+
+.gameplay-audio-wave span:nth-child(1) { height: 12px; animation-delay: 0.1s; }
+.gameplay-audio-wave span:nth-child(2) { height: 24px; animation-delay: 0.3s; }
+.gameplay-audio-wave span:nth-child(3) { height: 36px; animation-delay: 0.2s; }
+.gameplay-audio-wave span:nth-child(4) { height: 20px; animation-delay: 0.4s; }
+.gameplay-audio-wave span:nth-child(5) { height: 32px; animation-delay: 0.15s; }
+.gameplay-audio-wave span:nth-child(6) { height: 16px; animation-delay: 0.35s; }
+.gameplay-audio-wave span:nth-child(7) { height: 28px; animation-delay: 0.25s; }
+
+@keyframes audioWave {
+    0%, 100% { transform: scaleY(0.4); opacity: 0.4; }
+    50% { transform: scaleY(1); opacity: 1; }
+}
+
+.gameplay-hud-bottom {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+}
+
+.gameplay-instruction {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: #94A3B8;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 10px 24px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}

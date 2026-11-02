@@ -76,8 +76,11 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
     def _handle_get_status(self):
         service = DashboardAPIHandler.service_ref
         disc_info: Optional[DiscInfo] = service.current_disc_info if service else None
-        is_playing = (service.state.value == "PLAYING") if service else False
-        active_target = service.launcher.active_target if (service and service.launcher) else None
+        launcher_running = bool(service and service.launcher and service.launcher.is_emulator_running())
+        is_playing = (service.state.value == "PLAYING" or launcher_running) if (service and hasattr(service, "state")) else False
+        active_target = service.launcher.active_target if (service and service.launcher and isinstance(service.launcher.active_target, str)) else None
+        raw_platform = getattr(service.launcher, "active_platform", None) if (service and service.launcher) else None
+        active_platform = raw_platform if isinstance(raw_platform, str) else None
 
         ingestion_state = None
         if service and hasattr(service, "ingestion_pipeline") and service.ingestion_pipeline:
@@ -91,6 +94,7 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         data = {
             "is_playing": is_playing,
             "active_game": active_target,
+            "active_platform": active_platform,
             "state": service.state.value if (service and hasattr(service.state, "value")) else "IDLE",
             "disc": {
                 "present": bool(disc_info and disc_info.is_playable),
@@ -192,6 +196,9 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         if launch_type == "disc":
             if service.current_disc_info and service.current_disc_info.is_playable:
                 res = service.launcher.launch(service.current_disc_info)
+                if res.status.value == "SUCCESS" and hasattr(service, "state"):
+                    from ..service import ServiceState
+                    service.state = ServiceState.PLAYING
                 self._send_json({"success": res.status.value == "SUCCESS", "status": res.status.value, "error": res.error_message})
             else:
                 self._send_json({"success": False, "error": "No playable disc in drive"}, status=400)
@@ -200,6 +207,9 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             file_path = payload.get("file_path", "")
             title = payload.get("title", "Game")
             res = service.launcher.launch_digital_game(platform, file_path, title)
+            if res.status.value == "SUCCESS" and hasattr(service, "state"):
+                from ..service import ServiceState
+                service.state = ServiceState.PLAYING
             self._send_json({"success": res.status.value == "SUCCESS", "status": res.status.value, "error": res.error_message})
 
     def _handle_post_exit(self):
