@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableDelayedExpansion
-title Install PlayStation Console Service
+title Install GameStation Console Service
 
 echo =======================================================
-echo Installing PlayStation Console Service (User Space)
+echo Installing GameStation Console Service (User Space)
 echo =======================================================
 echo No administrator privileges required.
 echo.
@@ -15,7 +15,7 @@ popd
 
 set "VBS_LAUNCHER=%PROJECT_ROOT%\scripts\run_service.vbs"
 set "STARTUP_FOLDER=%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup"
-set "SHORTCUT_PATH=%STARTUP_FOLDER%\PlayStationConsole.lnk"
+set "SHORTCUT_PATH=%STARTUP_FOLDER%\GameStation.lnk"
 
 if not exist "%VBS_LAUNCHER%" (
     echo [ERROR] Launcher file not found: "%VBS_LAUNCHER%"
@@ -33,7 +33,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$s.TargetPath = 'wscript.exe'; " ^
     "$s.Arguments = '\"%VBS_LAUNCHER%\"'; " ^
     "$s.WorkingDirectory = '%PROJECT_ROOT%'; " ^
-    "$s.Description = 'PlayStation Disc Console Background Daemon'; " ^
+    "$s.Description = 'GameStation Universal Disc Console Background Daemon'; " ^
     "$s.Save()"
 
 if exist "%SHORTCUT_PATH%" (

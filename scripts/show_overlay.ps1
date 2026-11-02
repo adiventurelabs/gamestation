@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    TV-Safe, Hardware-Accelerated PlayStation Console Overlay for Windows.
+    TV-Safe, Hardware-Accelerated GameStation Console Overlay for Windows.
     Displays modern console toasts and error screens using built-in Windows WPF.
 .PARAMETER Type
     READING, LAUNCH_PS1, LAUNCH_PS2, ERROR, WARNING, CLOSE

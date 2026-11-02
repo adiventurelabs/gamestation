@@ -1,6 +1,6 @@
 """
 UI Notification Overlay.
-Renders sleek, TV-safe, hardware-accelerated PlayStation Console banners and dialogs.
+Renders sleek, TV-safe, hardware-accelerated GameStation Console banners and dialogs.
 Supports native Windows WPF (PowerShell) for smooth 60fps animations with acrylic styling,
 Tkinter fallback, and headless fallback for test suites.
 """

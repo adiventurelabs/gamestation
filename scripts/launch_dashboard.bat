@@ -1,9 +1,9 @@
 @echo off
 setlocal
-title PlayStation Console Dashboard
+title GameStation Console Dashboard
 
 echo ========================================================
-echo   Launching PlayStation Console Dashboard Shell
+echo   Launching GameStation Console Dashboard Shell
 echo ========================================================
 echo.
 
@@ -15,7 +15,7 @@ if not exist "%EDGE_EXE%" (
 set "TARGET_URL=http://127.0.0.1:8088"
 
 if exist "%EDGE_EXE%" (
-    echo Starting Microsoft Edge in PlayStation Kiosk Mode...
+    echo Starting Microsoft Edge in GameStation Kiosk Mode...
     start "" "%EDGE_EXE%" --app="%TARGET_URL%" --kiosk --start-fullscreen --no-first-run
 ) else (
     echo Starting in default system browser...

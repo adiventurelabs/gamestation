@@ -10,6 +10,7 @@ let cards = [];
 let libraryGames = [];
 let discState = { present: false, title: "No Disc Inserted", type: "OPTICAL", serial: "" };
 let isAudioEnabled = false;
+let audioMuted = false;
 
 // DOM Elements
 const carouselTrack = document.getElementById("carouselTrack");
@@ -18,13 +19,18 @@ const heroDescription = document.getElementById("heroDescription");
 const heroPlatformBadge = document.getElementById("heroPlatformBadge");
 const heroSerialBadge = document.getElementById("heroSerialBadge");
 const heroFormatBadge = document.getElementById("heroFormatBadge");
+const heroPlayBtn = document.getElementById("heroPlayBtn");
+const heroPlayBtnText = document.getElementById("heroPlayBtnText");
+const heroPlayIcon = document.getElementById("heroPlayIcon");
+const btnAudioToggle = document.getElementById("btnAudioToggle");
+const btnExitGameplayReturn = document.getElementById("btnExitGameplayReturn");
 const opticalDrivePill = document.getElementById("opticalDrivePill");
 const statusDiscText = document.getElementById("statusDiscText");
 const statusDiscIcon = document.getElementById("statusDiscIcon");
 const systemClock = document.getElementById("systemClock");
 
 // ==========================================================================
-// 1. Web Audio API Synthesizer (Authentic PlayStation Sound FX)
+// 1. Web Audio API Synthesizer (Authentic Console Sound FX)
 // ==========================================================================
 let audioCtx = null;
 
@@ -33,10 +39,13 @@ function initAudio() {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         isAudioEnabled = true;
     }
+    if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+    }
 }
 
 function playTickSound() {
-    if (!audioCtx) return;
+    if (!audioCtx || audioMuted) return;
     try {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -53,7 +62,7 @@ function playTickSound() {
 }
 
 function playLaunchSound() {
-    if (!audioCtx) return;
+    if (!audioCtx || audioMuted) return;
     try {
         const now = audioCtx.currentTime;
         const osc = audioCtx.createOscillator();
@@ -68,6 +77,92 @@ function playLaunchSound() {
         osc.start();
         osc.stop(now + 0.35);
     } catch (e) {}
+}
+
+function playTrophySound() {
+    if (!audioCtx || audioMuted) return;
+    try {
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.setValueAtTime(880.00, now + 0.08); // A5
+        osc.frequency.setValueAtTime(1174.66, now + 0.16); // D6
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(now + 0.4);
+    } catch (e) {}
+}
+
+function toggleAudio() {
+    initAudio();
+    audioMuted = !audioMuted;
+    if (btnAudioToggle) {
+        if (audioMuted) {
+            btnAudioToggle.classList.add("muted");
+            btnAudioToggle.textContent = "🔇 Sound OFF";
+        } else {
+            btnAudioToggle.classList.remove("muted");
+            btnAudioToggle.textContent = "🔊 Sound ON";
+            playTrophySound();
+        }
+    }
+}
+
+// GameStation Toast Notification System
+function showToast(message, type = "info", icon = null, duration = 3500) {
+    const container = document.getElementById("toastContainer");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    toast.className = `ps-toast ${type}`;
+
+    const iconMap = {
+        "info": "🎮",
+        "warning": "⚠️",
+        "error": "❌",
+        "disc": "💿"
+    };
+
+    const iconChar = icon || iconMap[type] || "🎮";
+    const titleText = type === "error" ? "System Alert" : (type === "warning" ? "Notice" : "GameStation");
+
+    toast.innerHTML = `
+        <div class="ps-toast-icon">${iconChar}</div>
+        <div class="ps-toast-body">
+            <div class="ps-toast-title">${titleText}</div>
+            <div class="ps-toast-msg">${message}</div>
+        </div>
+    `;
+
+    container.appendChild(toast);
+    playTrophySound();
+
+    requestAnimationFrame(() => {
+        toast.classList.add("show");
+    });
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+    }, duration);
+}
+
+// Optical Disc Modal Handlers (Module Scope)
+function openTestDiscModal() {
+    initAudio();
+    const modal = document.getElementById("testDiscModal");
+    if (modal) modal.classList.add("visible");
+}
+
+function closeTestDiscModal() {
+    initAudio();
+    const modal = document.getElementById("testDiscModal");
+    if (modal) modal.classList.remove("visible");
 }
 
 // ==========================================================================
@@ -153,13 +248,17 @@ function updateHeroDetails() {
             heroSerialBadge.style.display = "inline-block";
             heroFormatBadge.textContent = "OPTICAL MEDIA";
             heroTitle.textContent = discState.title;
-            heroDescription.textContent = `Physical original ${discState.type} game disc detected in optical drive. Press (✕) / (A) to boot into fullscreen emulator.`;
+            heroDescription.textContent = `Physical original ${discState.type} game disc detected in optical drive. Press (✕) / (A) or tap Play Disc to boot.`;
+            if (heroPlayBtnText) heroPlayBtnText.textContent = "Play Disc";
+            if (heroPlayIcon) heroPlayIcon.textContent = "▶";
         } else {
             heroPlatformBadge.style.display = "none";
             heroSerialBadge.style.display = "none";
             heroFormatBadge.textContent = "OPTICAL DRIVE EMPTY";
-            heroTitle.textContent = "Insert PlayStation Disc";
-            heroDescription.textContent = "Insert an original PlayStation 1 or 2 physical disc into your USB drive to start playing automatically.";
+            heroTitle.textContent = "Insert Game Disc";
+            heroDescription.textContent = "Insert an original PlayStation or Xbox physical disc into your drive to start playing automatically.";
+            if (heroPlayBtnText) heroPlayBtnText.textContent = "Open Disc Tray";
+            if (heroPlayIcon) heroPlayIcon.textContent = "⏏";
         }
     } else {
         // Digital Game Slot
@@ -171,7 +270,9 @@ function updateHeroDetails() {
             heroSerialBadge.style.display = "inline-block";
             heroFormatBadge.textContent = `${game.format} FILE`;
             heroTitle.textContent = game.title;
-            heroDescription.textContent = `Downloaded ${game.platform} title located in your PlayStation storage library. Press (✕) / (A) to play.`;
+            heroDescription.textContent = `Downloaded ${game.platform} title located in your GameStation library. Press (✕) / (A) or tap Play Game.`;
+            if (heroPlayBtnText) heroPlayBtnText.textContent = "Play Game";
+            if (heroPlayIcon) heroPlayIcon.textContent = "▶";
         }
     }
 }
@@ -185,10 +286,12 @@ async function launchSelectedGame() {
     if (currentIndex === 0) {
         // Launch Physical Disc
         if (!discState.present) {
-            alert("No disc in drive. Please insert an original PS1 or PS2 disc.");
+            showToast("Opening Optical Disc Tray...", "info", "💿");
+            openTestDiscModal();
             return;
         }
         try {
+            showToast(`Loading ${discState.title}...`, "info", "💿");
             const res = await fetch("/api/launch", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -198,10 +301,11 @@ async function launchSelectedGame() {
             if (data.success) {
                 setTimeout(fetchStatus, 150);
             } else {
-                alert(`Could not start disc: ${data.error || data.status}`);
+                showToast(`Could not start disc: ${data.error || data.status}`, "error", "⚠️");
             }
         } catch (e) {
             console.error("Launch error:", e);
+            showToast("Failed to communicate with console service.", "error", "⚠️");
         }
     } else {
         // Launch Digital Game
@@ -209,6 +313,7 @@ async function launchSelectedGame() {
         if (!game) return;
 
         try {
+            showToast(`Starting ${game.title}...`, "info", "🎮");
             const res = await fetch("/api/launch", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -223,10 +328,11 @@ async function launchSelectedGame() {
             if (data.success) {
                 setTimeout(fetchStatus, 150);
             } else {
-                alert(`Could not launch ${game.title}: ${data.error || data.status}`);
+                showToast(`Could not launch ${game.title}: ${data.error || data.status}`, "error", "⚠️");
             }
         } catch (e) {
             console.error("Launch error:", e);
+            showToast("Failed to communicate with console service.", "error", "⚠️");
         }
     }
 }
@@ -561,21 +667,23 @@ window.addEventListener("DOMContentLoaded", () => {
         }
     }, { passive: true });
 
+    // Top Action Buttons
+    if (btnAudioToggle) btnAudioToggle.addEventListener("click", toggleAudio);
+    if (heroPlayBtn) {
+        heroPlayBtn.addEventListener("click", () => {
+            initAudio();
+            if (currentIndex === 0 && !discState.present) {
+                openTestDiscModal();
+            } else {
+                launchSelectedGame();
+            }
+        });
+    }
+
     // Test Disc Modal Controls (iPad Friendly)
-    const testDiscModal = document.getElementById("testDiscModal");
     const btnTestDisc = document.getElementById("btnTestDisc");
     const btnCloseTestDisc = document.getElementById("btnCloseTestDisc");
     const testDiscBackdrop = document.getElementById("testDiscBackdrop");
-
-    function openTestDiscModal() {
-        initAudio();
-        testDiscModal.classList.add("visible");
-    }
-
-    function closeTestDiscModal() {
-        initAudio();
-        testDiscModal.classList.remove("visible");
-    }
 
     if (btnTestDisc) btnTestDisc.addEventListener("click", openTestDiscModal);
     if (btnCloseTestDisc) btnCloseTestDisc.addEventListener("click", closeTestDiscModal);
@@ -602,6 +710,13 @@ window.addEventListener("DOMContentLoaded", () => {
     // Exit Gameplay Viewport
     if (btnExitGameplay) {
         btnExitGameplay.addEventListener("click", async () => {
+            initAudio();
+            await fetch("/api/exit", { method: "POST" });
+            setTimeout(fetchStatus, 200);
+        });
+    }
+    if (btnExitGameplayReturn) {
+        btnExitGameplayReturn.addEventListener("click", async () => {
             initAudio();
             await fetch("/api/exit", { method: "POST" });
             setTimeout(fetchStatus, 200);

@@ -101,7 +101,7 @@ class PSConsoleService:
     def start(self):
         """Starts all background watchers and enters the main service loop."""
         self.logger.info("==========================================")
-        self.logger.info("Starting PlayStation Console Service v1.0")
+        self.logger.info("Starting GameStation Console Service v1.0")
         self.logger.info("==========================================")
         self._running = True
 
@@ -125,7 +125,7 @@ class PSConsoleService:
 
     def stop(self):
         """Clean shutdown of service and child processes."""
-        self.logger.info("Stopping PlayStation Console Service...")
+        self.logger.info("Stopping GameStation Console Service...")
         self._running = False
 
         if self.state == ServiceState.PLAYING:
@@ -139,7 +139,7 @@ class PSConsoleService:
 
         self.controller.stop()
         self.detector.stop()
-        self.logger.info("PlayStation Console Service stopped cleanly.")
+        self.logger.info("GameStation Console Service stopped cleanly.")
 
     def _handle_signal(self, signum, frame):
         self.logger.info(f"Received shutdown signal ({signum}).")

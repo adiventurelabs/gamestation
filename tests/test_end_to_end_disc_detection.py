@@ -1,7 +1,7 @@
 """
-End-to-End Integration Tests for PlayStation Console Auto-Detection & Disc Launch.
+End-to-End Integration Tests for GameStation Console Auto-Detection & Disc Launch.
 Simulates real optical disc insertion, startup disc detection, removal, re-insertion,
-and controller exit workflows using dummy disc files with exact PlayStation parameters.
+and controller exit workflows using dummy disc files with exact console parameters.
 """
 
 import os

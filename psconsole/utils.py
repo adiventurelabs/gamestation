@@ -1,5 +1,5 @@
 """
-Core utility functions for PlayStation Console Service.
+Core utility functions for GameStation Console Service.
 Handles logging, path expansion, platform checks, and Windows API wrappers.
 """
 

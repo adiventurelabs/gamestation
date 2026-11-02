@@ -1,12 +1,12 @@
 <#
 .SYNOPSIS
-    Inspects existing Windows laptop setup for PlayStation Console integration.
+    Inspects existing Windows laptop setup for GameStation Console integration.
     Checks optical drives, DuckStation, PCSX2, BIOS files, controllers, and Python.
 #>
 
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host " PlayStation Console Setup & Inspection Inspector" -ForegroundColor Yellow
+Write-Host " GameStation Console Setup & Inspection Inspector" -ForegroundColor Yellow
 Write-Host " Target Hardware: Acer Helios 300 / Windows Gaming Setup" -ForegroundColor Gray
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host ""

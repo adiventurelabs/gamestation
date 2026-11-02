@@ -1,8 +1,8 @@
-# PlayStation Console: Physical Disc & Digital Dashboard OS for Windows
+# GameStation: Universal Physical Disc & Digital Dashboard OS for Windows
 
-Transform your Windows gaming laptop (Acer Helios 300 / Intel i7-9750H / GTX 1660 Ti) into an authentic, mature PlayStation console experience.
+Transform your Windows gaming laptop (Acer Helios 300 / Intel i7-9750H / GTX 1660 Ti) into an authentic, mature console experience.
 
-**Vision:** Insert an original physical PlayStation disc (PS1, PS2, or PS3) or pick from your digital library, grab your gamepad, and play immediately on your TV or laptop with buttery-smooth 60fps PlayStation console navigation.
+**Vision:** Insert an original physical game disc (PlayStation or Xbox) or pick from your digital library, grab your gamepad, and play immediately on your TV or laptop with buttery-smooth 60fps console navigation.
 
 ---
 
@@ -15,16 +15,16 @@ This entire system runs natively on **Windows 10 / 11**.
 
 ---
 
-## Core PlayStation Experience
+## Core GameStation Experience
 
 ### 1. Dual Disc & Digital Game Hub
-- **Slot 0 (Physical Disc Hero Card):** The moment you insert an original PS1, PS2, or PS3 disc, the optical tray is recognized in real time. An animated rotating disc graphic lights up with the game title, platform badge, serial code, and `[Press A to Play Disc]`.
-- **Slots 1..N (Digital Library Ribbon):** A horizontal, 60fps carousel featuring your downloaded PS1, PS2, PS3, and PS4 games (CUE/CHD/ISO/PKG).
+- **Slot 0 (Physical Disc Hero Card):** The moment you insert an original PS1, PS2, PS3, or Xbox disc, the optical tray is recognized in real time. An animated rotating disc graphic lights up with the game title, platform badge, serial code, and `[Press A to Play Disc]`.
+- **Slots 1..N (Digital Library Ribbon):** A horizontal, 60fps carousel featuring your downloaded PlayStation and Xbox games.
 
 ### 2. Full Gamepad Navigation & Sound Effects
 - Complete controller navigation using HTML5 Gamepad API (Xbox One/Series, DualShock 4, DualSense, and generic gamepads).
-- Authentic PlayStation sound effects synthesized live via the browser's Web Audio API (zero external audio files needed).
-- Flowing PlayStation ribbon particle wave background.
+- Authentic console sound effects synthesized live via the browser's Web Audio API (zero external audio files needed).
+- Flowing GameStation ribbon particle wave background.
 
 ### 3. Integrated Multi-Generation & Cross-Console Support
 - **PlayStation 1:** DuckStation (`-batch -fullscreen -- "D:\"` or `.cue`/`.chd`).

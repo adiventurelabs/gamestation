@@ -1,4 +1,4 @@
-' Silent Background Launcher for PlayStation Console Service
+' Silent Background Launcher for GameStation Console Service
 ' Starts pythonw without exposing any console window or terminal.
 
 Set objShell = CreateObject("WScript.Shell")

@@ -928,7 +928,9 @@ body.ps-console-body {
     position: relative;
     z-index: 2;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
 }
 
 .gameplay-instruction {
@@ -941,4 +943,161 @@ body.ps-console-body {
     padding: 10px 24px;
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Hero Action Button (PS5 Style) */
+.hero-actions {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.hero-play-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: #FFFFFF;
+    color: #03060F;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 28px;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.35), 0 0 40px rgba(0, 112, 209, 0.4);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.hero-play-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 6px 28px rgba(255, 255, 255, 0.5), 0 0 50px rgba(0, 112, 209, 0.6);
+}
+
+.hero-play-btn:active {
+    transform: translateY(1px) scale(0.97);
+}
+
+.hero-play-icon {
+    font-size: 15px;
+}
+
+/* Audio Toggle Pill */
+.audio-toggle-pill {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--ps-text-white);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.audio-toggle-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.audio-toggle-pill.muted {
+    color: var(--ps-text-dim);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Gameplay Viewport Return Button */
+.gameplay-return-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: #FFFFFF;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+}
+
+.gameplay-return-btn:hover, .gameplay-return-btn:active {
+    background: rgba(239, 68, 68, 0.8);
+    border-color: #EF4444;
+    transform: scale(1.04);
+}
+
+/* GameStation Toast Notification System */
+.ps-toast-container {
+    position: fixed;
+    top: 24px;
+    right: 32px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+}
+
+.ps-toast {
+    pointer-events: auto;
+    min-width: 300px;
+    max-width: 420px;
+    background: rgba(11, 19, 43, 0.92);
+    border: 1px solid rgba(0, 169, 224, 0.4);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 112, 209, 0.3);
+    backdrop-filter: blur(16px);
+    border-radius: 14px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: #FFFFFF;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+}
+
+.ps-toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.ps-toast.warning {
+    border-color: rgba(245, 158, 11, 0.5);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(245, 158, 11, 0.3);
+}
+
+.ps-toast.error {
+    border-color: rgba(239, 68, 68, 0.6);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(239, 68, 68, 0.3);
+}
+
+.ps-toast-icon {
+    font-size: 26px;
+    flex-shrink: 0;
+}
+
+.ps-toast-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.ps-toast-title {
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--ps-cyan-glow);
+    text-transform: uppercase;
+}
+
+.ps-toast-msg {
+    font-size: 13px;
+    color: #E2E8F0;
+    line-height: 1.35;
 }

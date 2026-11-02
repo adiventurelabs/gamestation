@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableDelayedExpansion
-title PlayStation Console UI Preview
+title GameStation Console UI Preview
 
 echo ========================================================
-echo   PlayStation Console UI Overlay Preview Tool
+echo   GameStation Console UI Overlay Preview Tool
 echo ========================================================
 echo.
 echo Select an overlay to test on screen:

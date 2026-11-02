@@ -167,6 +167,8 @@ class EmulatorLauncher:
 
         bios_ok, bios_dir = self.verify_bios_files(platform)
         if not bios_ok:
+            if self.config.get("allow_simulation", False):
+                return self._start_simulated_session(platform, emu_name, disc_info.title)
             return LaunchResult(
                 status=LaunchStatus.BIOS_MISSING,
                 emulator_name=emu_name,

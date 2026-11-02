@@ -1,6 +1,6 @@
 """
-PlayStation Console Dashboard HTTP & REST API Server.
-Hosts the local WebGL/HTML5 60fps PlayStation console interface,
+GameStation Console Dashboard HTTP & REST API Server.
+Hosts the local WebGL/HTML5 60fps GameStation console interface,
 serves game library data, and bridges browser Gamepad input to emulator launching.
 """
 
@@ -17,7 +17,7 @@ from ..disc_identifier import DiscInfo, DiscType
 
 
 class DashboardAPIHandler(SimpleHTTPRequestHandler):
-    """Handles static assets and PlayStation Console REST endpoints."""
+    """Handles static assets and GameStation Console REST endpoints."""
 
     # Reference to active PSConsoleService instance
     service_ref = None
@@ -163,6 +163,10 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
                 f.write(b"\x00PS3_DISC_SFB_MOCK")
             with open(os.path.join(ps3_game, "PARAM.SFO"), "wb") as f:
                 f.write(b"\x00PSF\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
+        elif disc_gen == "XBOX":
+            volume_label = "HALO_2"
+            with open(os.path.join(test_dir, "default.xbe"), "wb") as f:
+                f.write(b"MOCK_ORIGINAL_XBOX_EXECUTABLE" * 20)
         elif disc_gen == "XBOX360":
             volume_label = "GEARS_OF_WAR"
             with open(os.path.join(test_dir, "default.xex"), "wb") as f:
@@ -258,7 +262,7 @@ class DashboardServer:
             self._thread = threading.Thread(target=self.server.serve_forever, daemon=True, name="DashboardServer")
             self._thread.start()
             if self.logger:
-                self.logger.info(f"PlayStation Console Dashboard server running at http://{self.host}:{self.port}")
+                self.logger.info(f"GameStation Console Dashboard server running at http://{self.host}:{self.port}")
         except Exception as e:
             if self.logger:
                 self.logger.error(f"Failed to start dashboard server: {e}")
