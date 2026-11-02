@@ -5,6 +5,7 @@ from configured local storage directories for display in the console dashboard.
 """
 
 import os
+import re
 import glob
 from dataclasses import dataclass, asdict
 from typing import List, Dict, Any, Optional
@@ -116,14 +117,27 @@ class LibraryScanner:
                         eboot_path = os.path.join(full_path, "eboot.bin")
                         if os.path.isfile(eboot_path):
                             size_mb = self._get_folder_size_mb(full_path)
-                            clean_name = item.replace("_", " ").title()
+                            sfo_path = os.path.join(full_path, "sce_sys", "param.sfo")
+                            title = None
+                            serial = None
+                            if os.path.isfile(sfo_path):
+                                try:
+                                    with open(sfo_path, "rb") as f:
+                                        params = self.identifier.parse_param_sfo(f.read())
+                                    title = params.get("TITLE")
+                                    serial = params.get("TITLE_ID")
+                                except Exception:
+                                    pass
+                            if not title:
+                                title = item.replace("_", " ").title()
                             games.append(LibraryGame(
                                 id=f"ps4_{item.lower()}",
-                                title=clean_name,
+                                title=title,
                                 platform="PS4",
                                 file_path=eboot_path,
                                 file_size_mb=round(size_mb, 1),
-                                format="FOLDER"
+                                format="FOLDER",
+                                serial=serial
                             ))
                     elif platform == "XBOX":
                         xbe_path = os.path.join(full_path, "default.xbe")
@@ -173,16 +187,18 @@ class LibraryScanner:
                             continue
 
                     size_mb = os.path.getsize(full_path) / (1024 * 1024)
-                    clean_name = os.path.splitext(item)[0].replace("_", " ").replace("-", " ").title()
+                    raw_stem = os.path.splitext(item)[0]
 
-                    # Try serial lookup from filename (e.g. SLUS-20062)
-                    serial = normalize_serial(clean_name)
+                    # Try serial lookup from raw filename (e.g. SLUS-20782)
+                    serial = normalize_serial(raw_stem)
                     title = self.db.get_title(serial) if serial else None
                     if not title:
-                        title = clean_name
+                        clean_stem = re.sub(r"\[[A-Z0-9_\-]+\]|\([A-Z0-9_\-]+\)", "", raw_stem).strip()
+                        title = clean_stem.replace("_", " ").title() if clean_stem else raw_stem
+                    clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", title.lower())[:25]
 
                     game = LibraryGame(
-                        id=f"{platform.lower()}_{clean_name[:20].lower()}",
+                        id=f"{platform.lower()}_{clean_id}",
                         title=title,
                         platform=platform,
                         file_path=full_path,

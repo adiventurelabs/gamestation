@@ -142,10 +142,28 @@ KNOWN_TITLES: Dict[str, str] = {
     "SCES-51719": "God of War (PAL)",
     "SCES-54206": "God of War II (PAL)",
 
+    # --- Sports & Wrestling Classics ---
+    "SLUS-20782": "WWE SmackDown! Here Comes the Pain",
+    "SLES-51824": "WWE SmackDown! Here Comes the Pain (PAL)",
+    "SLUS-20412": "WWE SmackDown! Shut Your Mouth",
+    "SLUS-21060": "WWE SmackDown! vs. RAW",
+    "SLUS-21269": "WWE SmackDown! vs. RAW 2006",
+    "SLUS-01046": "WWF SmackDown! 2: Know Your Role",
+    "SLUS-00927": "WWF SmackDown!",
+    "SLES-54245": "FIFA 07",
+    "SLUS-21474": "FIFA 07",
+    "SLES-55668": "FIFA 14",
+    "SLUS-21956": "FIFA 14",
+    "SLUS-00569": "FIFA 98: Road to World Cup",
+    "SLES-00917": "FIFA 98: Road to World Cup (PAL)",
+    "SLUS-00746": "FIFA 99",
+
     # --- Homebrew & Open Source Classics ---
     "240P-PS1": "240p Test Suite (PS1)",
     "240PTESTSUITEPS1-EMU": "240p Test Suite (PS1)",
-    "FREEDVDBOOT-PS2-SLIM": "FreeDVDBoot Homebrew (PS2 Slim)"
+    "FREEDVDBOOT-PS2-SLIM": "FreeDVDBoot Homebrew (PS2 Slim)",
+    "NET-YAROZE-COLLECTION": "Net Yaroze Collection",
+    "HERMES": "Hermes (PS2)"
 }
 
 
@@ -165,6 +183,17 @@ def normalize_serial(raw_serial: str) -> str:
     clean = re.sub(r"^cdrom\d*:[\\/]*", "", raw_serial, flags=re.IGNORECASE)
     clean = re.sub(r";\d+$", "", clean)
     clean = os.path.basename(clean).upper()
+
+    # Search for embedded Sony 4-letter prefix + digits format anywhere in string
+    match_search = re.search(r"([A-Z]{4})[_\-](\d{5})", clean)
+    if match_search:
+        prefix, digits = match_search.groups()
+        return f"{prefix}-{digits}"
+
+    match_search2 = re.search(r"([A-Z]{4})[_\-]?(\d{3})[.]?(\d{2})", clean)
+    if match_search2:
+        prefix, part1, part2 = match_search2.groups()
+        return f"{prefix}-{part1}{part2}"
 
     # Match standard Sony 4-letter prefix + digits format
     match = re.match(r"^([A-Z]{4})[_\-]?(\d{3})[.]?(\d{2})$", clean)

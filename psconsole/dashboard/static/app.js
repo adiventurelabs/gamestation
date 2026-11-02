@@ -473,9 +473,21 @@ async function fetchLibrary() {
                 "PS1": "linear-gradient(135deg, #00439C, #001A3D)",
                 "PS2": "linear-gradient(135deg, #002244, #0B132B)",
                 "PS3": "linear-gradient(135deg, #8A0000, #2B0505)",
-                "PS4": "linear-gradient(135deg, #0070D1, #003666)"
+                "PS4": "linear-gradient(135deg, #0070D1, #003666)",
+                "XBOX": "linear-gradient(135deg, #107C10, #063806)",
+                "XBOX360": "linear-gradient(135deg, #2E7D32, #0D3810)"
             };
             const grad = bgGradients[game.platform] || bgGradients["PS1"];
+
+            const platformIcons = {
+                "PS1": "🕹️",
+                "PS2": "🎮",
+                "PS3": "⚡",
+                "PS4": "🩸",
+                "XBOX": "🏎️",
+                "XBOX360": "🏎️"
+            };
+            const icon = platformIcons[game.platform] || "🎮";
 
             card.innerHTML = `
                 <div class="poster-art" style="background: ${grad};"></div>
@@ -486,7 +498,7 @@ async function fetchLibrary() {
                     </div>
                     <div class="disc-visual">
                         <div style="font-size: 54px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
-                            ${game.platform === "PS1" ? "🕹" : (game.platform === "PS2" ? "🎮" : "⚡")}
+                            ${icon}
                         </div>
                     </div>
                     <div class="card-footer">
