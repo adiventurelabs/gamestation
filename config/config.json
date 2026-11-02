@@ -120,6 +120,89 @@
         "--fullscreen",
         "{target}"
       ]
+    },
+    "psp": {
+      "name": "PPSSPP",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\PPSSPP\\PPSSPPWindows64.exe",
+        "%LOCALAPPDATA%\\PPSSPP\\PPSSPPWindows64.exe",
+        "%PROGRAMFILES%\\PPSSPP\\PPSSPPWindows64.exe"
+      ],
+      "cli_args_file": [
+        "-f",
+        "{target}"
+      ]
+    },
+    "gamecube": {
+      "name": "Dolphin",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\Dolphin\\Dolphin.exe",
+        "%LOCALAPPDATA%\\Dolphin-x64\\Dolphin.exe",
+        "%PROGRAMFILES%\\Dolphin\\Dolphin.exe"
+      ],
+      "cli_args_file": [
+        "-b",
+        "-e",
+        "{target}"
+      ]
+    },
+    "wii": {
+      "name": "Dolphin",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\Dolphin\\Dolphin.exe",
+        "%LOCALAPPDATA%\\Dolphin-x64\\Dolphin.exe",
+        "%PROGRAMFILES%\\Dolphin\\Dolphin.exe"
+      ],
+      "cli_args_file": [
+        "-b",
+        "-e",
+        "{target}"
+      ]
+    },
+    "dreamcast": {
+      "name": "Redream",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\Redream\\redream.exe",
+        "%LOCALAPPDATA%\\Redream\\redream.exe",
+        "%PROGRAMFILES%\\Redream\\redream.exe",
+        "%LOCALAPPDATA%\\Programs\\Flycast\\flycast.exe"
+      ],
+      "cli_args_file": [
+        "{target}"
+      ]
+    },
+    "n64": {
+      "name": "simple64",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\simple64\\simple64-gui.exe",
+        "%PROGRAMFILES%\\Project64\\Project64.exe"
+      ],
+      "cli_args_file": [
+        "--fullscreen",
+        "{target}"
+      ]
+    },
+    "snes": {
+      "name": "Snes9x",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\Snes9x\\snes9x-x64.exe",
+        "%PROGRAMFILES%\\Snes9x\\snes9x-x64.exe"
+      ],
+      "cli_args_file": [
+        "-fullscreen",
+        "{target}"
+      ]
+    },
+    "gba": {
+      "name": "mGBA",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\mGBA\\mGBA.exe",
+        "%PROGRAMFILES%\\mGBA\\mGBA.exe"
+      ],
+      "cli_args_file": [
+        "-f",
+        "{target}"
+      ]
     }
   },
   "detector": {
@@ -145,6 +228,13 @@
     "ps2_dir": "%USERPROFILE%\\Games\\PlayStation\\PS2",
     "ps3_dir": "%USERPROFILE%\\Games\\PlayStation\\PS3",
     "ps4_dir": "%USERPROFILE%\\Games\\PlayStation\\PS4",
+    "psp_dir": "%USERPROFILE%\\Games\\PlayStation\\PSP",
+    "gamecube_dir": "%USERPROFILE%\\Games\\Nintendo\\GameCube",
+    "wii_dir": "%USERPROFILE%\\Games\\Nintendo\\Wii",
+    "dreamcast_dir": "%USERPROFILE%\\Games\\Sega\\Dreamcast",
+    "n64_dir": "%USERPROFILE%\\Games\\Nintendo\\N64",
+    "snes_dir": "%USERPROFILE%\\Games\\Nintendo\\SNES",
+    "gba_dir": "%USERPROFILE%\\Games\\Nintendo\\GBA",
     "xbox_dir": "%USERPROFILE%\\Games\\Xbox\\Original",
     "xbox360_dir": "%USERPROFILE%\\Games\\Xbox\\Xbox360"
   },

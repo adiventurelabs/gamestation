@@ -80,8 +80,8 @@ class EmulatorLauncher:
         Returns (is_found, bios_directory_checked).
         """
         key = platform_name.lower()
-        if key in ("ps3", "ps4", "xbox", "xbox360"):
-            # PS3, PS4, Xbox, and Xbox360 manage firmware/runtime internally
+        if key in ("ps3", "ps4", "xbox", "xbox360", "psp", "gamecube", "wii", "dreamcast", "n64", "snes", "gba"):
+            # These systems manage firmware/HLE runtime internally
             return True, "firmware"
 
         emu_cfg = self.config.get("emulators", {}).get(key, {})
@@ -146,6 +146,18 @@ class EmulatorLauncher:
             cmd.extend(["-full-screen", "-dvd_path", file_path])
         elif key == "xbox360":
             cmd.extend(["--fullscreen", file_path])
+        elif key == "psp":
+            cmd.extend(["-f", file_path])
+        elif key in ("gamecube", "wii"):
+            cmd.extend(["-b", "-e", file_path])
+        elif key == "dreamcast":
+            cmd.append(file_path)
+        elif key == "n64":
+            cmd.extend(["--fullscreen", file_path])
+        elif key == "snes":
+            cmd.extend(["-fullscreen", file_path])
+        elif key == "gba":
+            cmd.extend(["-f", file_path])
 
         return cmd
 

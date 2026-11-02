@@ -109,6 +109,22 @@ class TestEmulatorLauncher(unittest.TestCase):
         cmd4 = self.launcher.build_command_file("PS4", "C:\\Games\\Bloodborne\\eboot.bin", "shadps4.exe")
         self.assertEqual(cmd4, ["shadps4.exe", "-g", "C:\\Games\\Bloodborne\\eboot.bin"])
 
+        # PSP digital ISO / CSO
+        cmd_psp = self.launcher.build_command_file("PSP", "C:\\Games\\CrisisCore.iso", "ppsspp.exe")
+        self.assertEqual(cmd_psp, ["ppsspp.exe", "-f", "C:\\Games\\CrisisCore.iso"])
+
+        # GameCube / Wii RVZ
+        cmd_gc = self.launcher.build_command_file("GAMECUBE", "C:\\Games\\Melee.rvz", "dolphin.exe")
+        self.assertEqual(cmd_gc, ["dolphin.exe", "-b", "-e", "C:\\Games\\Melee.rvz"])
+
+        # Dreamcast CHD / CDI
+        cmd_dc = self.launcher.build_command_file("DREAMCAST", "C:\\Games\\CrazyTaxi.chd", "redream.exe")
+        self.assertEqual(cmd_dc, ["redream.exe", "C:\\Games\\CrazyTaxi.chd"])
+
+        # GBA
+        cmd_gba = self.launcher.build_command_file("GBA", "C:\\Games\\Pokemon.gba", "mgba.exe")
+        self.assertEqual(cmd_gba, ["mgba.exe", "-f", "C:\\Games\\Pokemon.gba"])
+
     def test_verify_bios_files_present(self):
         ok_ps1, path_ps1 = self.launcher.verify_bios_files("PS1")
         self.assertTrue(ok_ps1)

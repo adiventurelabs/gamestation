@@ -378,7 +378,14 @@ async function fetchStatus() {
                 "PS3": "⚡",
                 "PS4": "🩸",
                 "XBOX": "🏎️",
-                "XBOX360": "🏎️"
+                "XBOX360": "🏎️",
+                "PSP": "📱",
+                "GAMECUBE": "🎲",
+                "WII": "🏸",
+                "DREAMCAST": "🌀",
+                "N64": "🕹️",
+                "SNES": "👾",
+                "GBA": "🎮"
             };
             gameplayIconLarge.textContent = iconMap[plat] || "🎮";
         } else {
@@ -474,6 +481,13 @@ async function fetchLibrary() {
                 "PS2": "linear-gradient(135deg, #002244, #0B132B)",
                 "PS3": "linear-gradient(135deg, #8A0000, #2B0505)",
                 "PS4": "linear-gradient(135deg, #0070D1, #003666)",
+                "PSP": "linear-gradient(135deg, #022047, #010D1F)",
+                "GAMECUBE": "linear-gradient(135deg, #6A0DAD, #2E0854)",
+                "WII": "linear-gradient(135deg, #009ACD, #004F6B)",
+                "DREAMCAST": "linear-gradient(135deg, #E65100, #4A1B00)",
+                "N64": "linear-gradient(135deg, #D32F2F, #4A0000)",
+                "SNES": "linear-gradient(135deg, #7C4DFF, #311B92)",
+                "GBA": "linear-gradient(135deg, #4A148C, #1A0033)",
                 "XBOX": "linear-gradient(135deg, #107C10, #063806)",
                 "XBOX360": "linear-gradient(135deg, #2E7D32, #0D3810)"
             };
@@ -484,6 +498,13 @@ async function fetchLibrary() {
                 "PS2": "🎮",
                 "PS3": "⚡",
                 "PS4": "🩸",
+                "PSP": "📱",
+                "GAMECUBE": "🎲",
+                "WII": "🏸",
+                "DREAMCAST": "🌀",
+                "N64": "🕹️",
+                "SNES": "👾",
+                "GBA": "🎮",
                 "XBOX": "🏎️",
                 "XBOX360": "🏎️"
             };

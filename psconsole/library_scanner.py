@@ -71,6 +71,34 @@ class LibraryScanner:
             "XBOX360": [
                 expand_windows_path(lib_cfg.get("xbox360_dir", os.path.join(default_base, "xbox360"))),
                 os.path.join(demo_base, "xbox360")
+            ],
+            "PSP": [
+                expand_windows_path(lib_cfg.get("psp_dir", os.path.join(default_base, "psp"))),
+                os.path.join(demo_base, "psp")
+            ],
+            "GAMECUBE": [
+                expand_windows_path(lib_cfg.get("gamecube_dir", os.path.join(default_base, "gamecube"))),
+                os.path.join(demo_base, "gamecube")
+            ],
+            "WII": [
+                expand_windows_path(lib_cfg.get("wii_dir", os.path.join(default_base, "wii"))),
+                os.path.join(demo_base, "wii")
+            ],
+            "DREAMCAST": [
+                expand_windows_path(lib_cfg.get("dreamcast_dir", os.path.join(default_base, "dreamcast"))),
+                os.path.join(demo_base, "dreamcast")
+            ],
+            "N64": [
+                expand_windows_path(lib_cfg.get("n64_dir", os.path.join(default_base, "n64"))),
+                os.path.join(demo_base, "n64")
+            ],
+            "SNES": [
+                expand_windows_path(lib_cfg.get("snes_dir", os.path.join(default_base, "snes"))),
+                os.path.join(demo_base, "snes")
+            ],
+            "GBA": [
+                expand_windows_path(lib_cfg.get("gba_dir", os.path.join(default_base, "gba"))),
+                os.path.join(demo_base, "gba")
             ]
         }
 
@@ -171,10 +199,17 @@ class LibraryScanner:
 
                 # Filter valid extensions by platform
                 valid_exts = {
-                    "PS1": [".cue", ".chd", ".iso", ".pbp"],
-                    "PS2": [".iso", ".chd", ".cso", ".bin"],
+                    "PS1": [".cue", ".chd", ".iso", ".pbp", ".bin"],
+                    "PS2": [".iso", ".chd", ".cso", ".bin", ".gz"],
                     "PS3": [".iso", ".pkg"],
                     "PS4": [".pkg", ".bin"],
+                    "PSP": [".iso", ".cso", ".chd", ".pbp"],
+                    "GAMECUBE": [".rvz", ".iso", ".gcm", ".ciso"],
+                    "WII": [".rvz", ".wbfs", ".iso", ".ciso"],
+                    "DREAMCAST": [".chd", ".cdi", ".gdi"],
+                    "N64": [".z64", ".n64", ".v64"],
+                    "SNES": [".sfc", ".smc"],
+                    "GBA": [".gba"],
                     "XBOX": [".iso", ".xbe"],
                     "XBOX360": [".iso", ".xex"]
                 }.get(platform, [])
