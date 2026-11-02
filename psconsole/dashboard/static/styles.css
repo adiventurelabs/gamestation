@@ -591,3 +591,161 @@ body.ps-console-body {
     font-weight: 600;
     margin-top: 4px;
 }
+
+/* ==========================================================================
+   Disc Tray Simulation Popover Modal & Nav Button (iPad Friendly)
+   ========================================================================== */
+.test-disc-nav-btn {
+    background: rgba(0, 112, 209, 0.25);
+    border: 1px solid rgba(0, 169, 224, 0.4);
+    color: #E2E8F0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.test-disc-nav-btn:hover, .test-disc-nav-btn:active {
+    background: rgba(0, 112, 209, 0.6);
+    border-color: #00E5FF;
+    transform: scale(1.04);
+}
+
+.prompt-item {
+    cursor: pointer;
+    transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.prompt-item:hover, .prompt-item:active {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+.test-disc-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 120;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s var(--ease-playstation);
+}
+
+.test-disc-modal.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.test-disc-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 7, 16, 0.85);
+    backdrop-filter: blur(16px);
+}
+
+.test-disc-card {
+    position: relative;
+    z-index: 2;
+    background: #0E172C;
+    border: 1px solid rgba(0, 169, 224, 0.3);
+    border-radius: 24px;
+    padding: 32px 36px;
+    max-width: 680px;
+    width: 90%;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
+}
+
+.test-disc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.test-disc-header h3 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ps-text-white);
+}
+
+.test-disc-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: var(--ps-text-white);
+    font-size: 16px;
+    font-weight: 700;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.test-disc-sub {
+    font-size: 14px;
+    color: var(--ps-text-dim);
+    margin-bottom: 24px;
+}
+
+.test-disc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.disc-sim-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    color: var(--ps-text-white);
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s ease;
+}
+
+.disc-sim-btn:hover, .disc-sim-btn:active {
+    background: rgba(0, 112, 209, 0.3);
+    border-color: #00A9E0;
+    transform: translateY(-2px);
+}
+
+.disc-sim-btn .sim-icon {
+    font-size: 26px;
+    margin-bottom: 2px;
+}
+
+.disc-sim-btn .sim-title {
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.disc-sim-btn .sim-sub {
+    font-size: 12px;
+    color: var(--ps-text-dim);
+}
+
+.disc-sim-btn.eject-btn {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+.disc-sim-btn.eject-btn:hover, .disc-sim-btn.eject-btn:active {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #EF4444;
+}

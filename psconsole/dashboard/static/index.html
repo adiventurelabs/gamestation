@@ -31,6 +31,7 @@
         </div>
 
         <div class="system-info">
+            <button class="test-disc-nav-btn" id="btnTestDisc">💿 Disc Tray</button>
             <div class="controller-status" id="controllerStatus">
                 <span class="ctrl-icon">🎮</span>
                 <span class="ctrl-label">Connected</span>
@@ -85,23 +86,67 @@
 
     <!-- Bottom Controller Action Prompts -->
     <footer class="bottom-bar">
-        <div class="prompt-item">
+        <div class="prompt-item" id="btnPromptPlay" role="button" tabindex="0">
             <span class="ps-btn ps-btn-cross">✕</span>
             <span class="prompt-text">Play</span>
         </div>
-        <div class="prompt-item">
+        <div class="prompt-item" id="btnPromptBack" role="button" tabindex="0">
             <span class="ps-btn ps-btn-circle">○</span>
             <span class="prompt-text">Back</span>
         </div>
-        <div class="prompt-item">
+        <div class="prompt-item" id="btnPromptSquare" role="button" tabindex="0">
             <span class="ps-btn ps-btn-square">□</span>
-            <span class="prompt-text" id="actionSquareLabel">Eject / Scan</span>
+            <span class="prompt-text" id="actionSquareLabel">Disc Tray</span>
         </div>
-        <div class="prompt-item">
+        <div class="prompt-item" id="btnPromptRefresh" role="button" tabindex="0">
             <span class="ps-btn ps-btn-triangle">△</span>
-            <span class="prompt-text">Refresh Library</span>
+            <span class="prompt-text">Refresh</span>
         </div>
     </footer>
+
+    <!-- Disc Tray Simulation Popover (For iPad / Remote Testing) -->
+    <div class="test-disc-modal" id="testDiscModal">
+        <div class="test-disc-backdrop" id="testDiscBackdrop"></div>
+        <div class="test-disc-card">
+            <div class="test-disc-header">
+                <h3>Optical Disc Simulation</h3>
+                <button class="test-disc-close" id="btnCloseTestDisc">✕</button>
+            </div>
+            <p class="test-disc-sub">Select a disc to test console auto-detection and loading:</p>
+            <div class="test-disc-grid">
+                <button class="disc-sim-btn" data-gen="PS1">
+                    <span class="sim-icon">🕹️</span>
+                    <span class="sim-title">PlayStation 1</span>
+                    <span class="sim-sub">Castlevania: SOTN (CD-ROM)</span>
+                </button>
+                <button class="disc-sim-btn" data-gen="PS2">
+                    <span class="sim-icon">🎮</span>
+                    <span class="sim-title">PlayStation 2</span>
+                    <span class="sim-sub">Shadow of Colossus (DVD)</span>
+                </button>
+                <button class="disc-sim-btn" data-gen="PS3">
+                    <span class="sim-icon">⚡</span>
+                    <span class="sim-title">PlayStation 3</span>
+                    <span class="sim-sub">Demon's Souls (Blu-ray)</span>
+                </button>
+                <button class="disc-sim-btn" data-gen="XBOX360">
+                    <span class="sim-icon">🏎️</span>
+                    <span class="sim-title">Xbox 360</span>
+                    <span class="sim-sub">Gears of War (Offline Ingest)</span>
+                </button>
+                <button class="disc-sim-btn" data-gen="PS4">
+                    <span class="sim-icon">🩸</span>
+                    <span class="sim-title">PlayStation 4</span>
+                    <span class="sim-sub">Bloodborne (Offline Ingest)</span>
+                </button>
+                <button class="disc-sim-btn eject-btn" data-action="eject">
+                    <span class="sim-icon">⏏️</span>
+                    <span class="sim-title">Eject Disc</span>
+                    <span class="sim-sub">Eject optical media</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Fullscreen PS5-Quality Disc Ingestion / Loading Screen -->
     <div class="ingestion-modal" id="ingestionModal">

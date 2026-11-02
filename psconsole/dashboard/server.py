@@ -8,7 +8,7 @@ import os
 import sys
 import json
 import urllib.parse
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import threading
 from typing import Optional, Dict, Any
 
@@ -26,6 +26,14 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
         super().__init__(*args, directory=static_dir, **kwargs)
+
+    def do_OPTIONS(self):
+        """Handles browser pre-flight checks for CORS."""
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
 
     def do_GET(self):
         url_parts = urllib.parse.urlparse(self.path)
@@ -60,6 +68,8 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
             self._handle_get_library()
         elif path == "/api/ingestion/cancel":
             self._handle_cancel_ingestion()
+        elif path == "/api/test/insert_disc":
+            self._handle_post_test_disc(payload)
         else:
             self.send_error(404, "Endpoint not found")
 
@@ -114,6 +124,56 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         else:
             self._send_json({"success": False, "error": "No service running"})
 
+    def _handle_post_test_disc(self, payload: Dict[str, Any]):
+        service = DashboardAPIHandler.service_ref
+        if not service:
+            self._send_json({"success": False, "error": "Service unavailable"}, status=503)
+            return
+
+        action = payload.get("action", "insert")
+        disc_gen = payload.get("generation", "PS1").upper()
+
+        if action == "eject":
+            service.handle_disc_removed("D:\\")
+            self._send_json({"success": True, "action": "ejected"})
+            return
+
+        import tempfile
+        test_dir = os.path.join(tempfile.gettempdir(), f"psconsole_test_{disc_gen.lower()}")
+        os.makedirs(test_dir, exist_ok=True)
+
+        volume_label = "GAME_DISC"
+        if disc_gen == "PS1":
+            volume_label = "CASTLEVANIA"
+            with open(os.path.join(test_dir, "SYSTEM.CNF"), "w", encoding="utf-8") as f:
+                f.write("BOOT = cdrom:\\SLUS_000.67;1\r\nTCB = 4\r\nEVENT = 16\r\nSTACK = 801FFF00\r\n")
+        elif disc_gen == "PS2":
+            volume_label = "SHADOW_COLOSSUS"
+            with open(os.path.join(test_dir, "SYSTEM.CNF"), "w", encoding="utf-8") as f:
+                f.write("BOOT2 = cdrom0:\\SCUS_971.24;1\r\nVER = 1.00\r\nVMODE = NTSC\r\n")
+        elif disc_gen == "PS3":
+            volume_label = "DEMONS_SOULS"
+            ps3_game = os.path.join(test_dir, "PS3_GAME")
+            os.makedirs(ps3_game, exist_ok=True)
+            with open(os.path.join(test_dir, "PS3_DISC.SFB"), "wb") as f:
+                f.write(b"\x00PS3_DISC_SFB_MOCK")
+            with open(os.path.join(ps3_game, "PARAM.SFO"), "wb") as f:
+                f.write(b"\x00PSF\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")
+        elif disc_gen == "XBOX360":
+            volume_label = "GEARS_OF_WAR"
+            with open(os.path.join(test_dir, "default.xex"), "wb") as f:
+                f.write(b"MOCK_XBOX360_EXECUTABLE" * 20)
+            os.makedirs(os.path.join(test_dir, "$SystemUpdate"), exist_ok=True)
+        elif disc_gen == "PS4":
+            volume_label = "CUSA-00001"
+            sce_sys = os.path.join(test_dir, "sce_sys")
+            os.makedirs(sce_sys, exist_ok=True)
+            with open(os.path.join(test_dir, "eboot.bin"), "wb") as f:
+                f.write(b"MOCK_PS4_ELF" * 20)
+
+        service.handle_disc_inserted(test_dir, volume_label)
+        self._send_json({"success": True, "action": "inserted", "generation": disc_gen, "label": volume_label})
+
     def _handle_get_library(self):
         scanner = DashboardAPIHandler.scanner_ref
         games = []
@@ -155,6 +215,8 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
@@ -167,13 +229,13 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
 class DashboardServer:
     """Manages background HTTP server lifecycle for the PlayStation console shell."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 8088, service=None, config=None, logger=None):
+    def __init__(self, host: str = "0.0.0.0", port: int = 8088, service=None, config=None, logger=None):
         self.host = host
         self.port = port
         self.service = service
         self.config = config or {}
         self.logger = logger
-        self.server: Optional[HTTPServer] = None
+        self.server: Optional[ThreadingHTTPServer] = None
         self._thread: Optional[threading.Thread] = None
 
         DashboardAPIHandler.service_ref = service
@@ -181,7 +243,8 @@ class DashboardServer:
 
     def start(self):
         try:
-            self.server = HTTPServer((self.host, self.port), DashboardAPIHandler)
+            ThreadingHTTPServer.allow_reuse_address = True
+            self.server = ThreadingHTTPServer((self.host, self.port), DashboardAPIHandler)
             self._thread = threading.Thread(target=self.server.serve_forever, daemon=True, name="DashboardServer")
             self._thread.start()
             if self.logger:

@@ -284,7 +284,8 @@ class PSConsoleService:
     def handle_disc_removed(self, drive_path: str):
         """Triggered when optical media is ejected."""
         self.logger.info(f"Disc removed from {drive_path}")
-        if self.state == ServiceState.PLAYING and self.current_disc_info and self.current_disc_info.drive_path == drive_path:
+        self.current_disc_info = None
+        if self.state == ServiceState.PLAYING:
             self.logger.warning("Active game disc was ejected during gameplay session. Emulator will manage drive I/O; user can exit via controller.")
 
     def handle_controller_exit(self):

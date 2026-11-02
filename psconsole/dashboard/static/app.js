@@ -360,8 +360,12 @@ async function fetchLibrary() {
 
             card.addEventListener("click", () => {
                 initAudio();
-                updateSelection(idx + 1);
-                launchSelectedGame();
+                const cardIndex = idx + 1;
+                if (currentIndex === cardIndex) {
+                    launchSelectedGame();
+                } else {
+                    updateSelection(cardIndex);
+                }
             });
 
             carouselTrack.appendChild(card);
@@ -482,23 +486,107 @@ function updateClock() {
 }
 
 // ==========================================================================
-// Initialization
+// Initialization & Touch / Remote Controls
 // ==========================================================================
 window.addEventListener("DOMContentLoaded", () => {
     initAmbientWave();
     cards = Array.from(carouselTrack.querySelectorAll(".game-card"));
 
+    // Disc Card Click
     document.getElementById("discCard").addEventListener("click", () => {
         initAudio();
-        updateSelection(0);
-        launchSelectedGame();
+        if (currentIndex === 0) {
+            launchSelectedGame();
+        } else {
+            updateSelection(0);
+        }
+    });
+
+    // Touch Swipe Support for iPad / Mobile
+    let touchStartX = 0;
+    let touchStartY = 0;
+    window.addEventListener("touchstart", (e) => {
+        initAudio();
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    window.addEventListener("touchend", (e) => {
+        const diffX = e.changedTouches[0].clientX - touchStartX;
+        const diffY = e.changedTouches[0].clientY - touchStartY;
+        if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY)) {
+            if (diffX < 0) {
+                updateSelection(currentIndex + 1);
+            } else {
+                updateSelection(currentIndex - 1);
+            }
+        }
+    }, { passive: true });
+
+    // Test Disc Modal Controls (iPad Friendly)
+    const testDiscModal = document.getElementById("testDiscModal");
+    const btnTestDisc = document.getElementById("btnTestDisc");
+    const btnCloseTestDisc = document.getElementById("btnCloseTestDisc");
+    const testDiscBackdrop = document.getElementById("testDiscBackdrop");
+
+    function openTestDiscModal() {
+        initAudio();
+        testDiscModal.classList.add("visible");
+    }
+
+    function closeTestDiscModal() {
+        initAudio();
+        testDiscModal.classList.remove("visible");
+    }
+
+    if (btnTestDisc) btnTestDisc.addEventListener("click", openTestDiscModal);
+    if (btnCloseTestDisc) btnCloseTestDisc.addEventListener("click", closeTestDiscModal);
+    if (testDiscBackdrop) testDiscBackdrop.addEventListener("click", closeTestDiscModal);
+
+    // Bottom Action Prompt Click Handlers (Touch Friendly)
+    const btnPromptPlay = document.getElementById("btnPromptPlay");
+    const btnPromptBack = document.getElementById("btnPromptBack");
+    const btnPromptSquare = document.getElementById("btnPromptSquare");
+    const btnPromptRefresh = document.getElementById("btnPromptRefresh");
+
+    if (btnPromptPlay) btnPromptPlay.addEventListener("click", () => { initAudio(); launchSelectedGame(); });
+    if (btnPromptBack) btnPromptBack.addEventListener("click", () => {
+        initAudio();
+        if (ingestionModal && ingestionModal.classList.contains("visible")) {
+            fetch("/api/ingestion/cancel", { method: "POST" });
+        } else {
+            updateSelection(0);
+        }
+    });
+    if (btnPromptSquare) btnPromptSquare.addEventListener("click", openTestDiscModal);
+    if (btnPromptRefresh) btnPromptRefresh.addEventListener("click", () => { initAudio(); fetchLibrary(); });
+
+    // Disc Simulation Action Buttons
+    document.querySelectorAll(".disc-sim-btn").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            initAudio();
+            const gen = btn.dataset.gen;
+            const action = btn.dataset.action || "insert";
+            closeTestDiscModal();
+
+            try {
+                await fetch("/api/test/insert_disc", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ generation: gen, action: action })
+                });
+                setTimeout(fetchStatus, 300);
+            } catch (err) {
+                console.warn("Disc simulation failed:", err);
+            }
+        });
     });
 
     updateClock();
     setInterval(updateClock, 10000);
 
     fetchStatus();
-    setInterval(fetchStatus, 2000);
+    setInterval(fetchStatus, 1500);
 
     fetchLibrary();
 

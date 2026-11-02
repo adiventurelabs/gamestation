@@ -136,8 +136,8 @@
   "dashboard": {
     "enabled": true,
     "port": 8088,
-    "host": "127.0.0.1",
-    "auto_launch_kiosk": true
+    "host": "0.0.0.0",
+    "auto_launch_kiosk": false
   },
   "library": {
     "ps1_dir": "%USERPROFILE%\\Games\\PlayStation\\PS1",
