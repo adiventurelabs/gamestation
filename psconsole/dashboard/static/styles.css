@@ -1,0 +1,438 @@
+/* ==========================================================================
+   PlayStation Console OS Theme
+   Fluid, 60fps, TV-Safe Hardware-Accelerated Console Dashboard
+   ========================================================================== */
+
+:root {
+    --ps-bg-dark: #050811;
+    --ps-bg-card: rgba(16, 25, 45, 0.75);
+    --ps-card-border: rgba(255, 255, 255, 0.12);
+    --ps-blue-deep: #002244;
+    --ps-blue-primary: #00439C;
+    --ps-blue-bright: #0070D1;
+    --ps-cyan-glow: #00A9E0;
+    --ps-gold-disc: #D4AF37;
+    --ps-text-white: #FFFFFF;
+    --ps-text-dim: #92A3B8;
+
+    --btn-cross: #3B82F6;
+    --btn-circle: #EF4444;
+    --btn-square: #EC4899;
+    --btn-triangle: #10B981;
+
+    --ease-playstation: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
+    outline: none;
+}
+
+body.ps-console-body {
+    background-color: var(--ps-bg-dark);
+    color: var(--ps-text-white);
+    font-family: 'SST', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+    cursor: default;
+}
+
+/* Ambient Canvas: Flowing Ribbon Wave */
+.ambient-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+/* ==========================================================================
+   Top Status Navigation Bar
+   ========================================================================== */
+.top-nav {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px 56px 16px 56px;
+    height: 90px;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.avatar-ring {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--ps-blue-bright), var(--ps-cyan-glow));
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 16px rgba(0, 112, 209, 0.4);
+}
+
+.avatar-icon {
+    width: 100%;
+    height: 100%;
+    background: #090F1C;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+}
+
+.user-name {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.status-indicator {
+    font-size: 12px;
+    color: var(--ps-text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background-color: #10B981;
+    box-shadow: 0 0 8px #10B981;
+}
+
+.system-status-pill {
+    background: rgba(16, 25, 45, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 24px;
+    padding: 8px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: #E2E8F0;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.system-status-pill.disc-ready {
+    border-color: var(--ps-cyan-glow);
+    background: rgba(0, 112, 209, 0.25);
+    color: #FFFFFF;
+}
+
+.disc-icon {
+    font-size: 16px;
+    display: inline-block;
+}
+
+.system-info {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+}
+
+.controller-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--ps-text-dim);
+}
+
+.clock {
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--ps-text-white);
+    letter-spacing: 0.5px;
+}
+
+/* ==========================================================================
+   Hero Details Section
+   ========================================================================== */
+.console-viewport {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: calc(100vh - 170px);
+    padding: 0 56px;
+}
+
+.hero-details {
+    margin-bottom: 36px;
+    max-width: 800px;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.badge-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.platform-badge {
+    background: linear-gradient(135deg, var(--ps-blue-primary), var(--ps-blue-bright));
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+
+.serial-badge, .format-badge {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--ps-text-dim);
+    font-weight: 600;
+}
+
+.hero-title {
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 12px;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+}
+
+.hero-description {
+    font-size: 16px;
+    color: var(--ps-text-dim);
+    line-height: 1.5;
+    max-width: 650px;
+}
+
+/* ==========================================================================
+   Horizontal Carousel / Game Ribbon
+   ========================================================================== */
+.carousel-container {
+    position: relative;
+    width: 100%;
+    overflow: visible;
+    padding: 24px 0;
+}
+
+.carousel-track {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    transition: transform 0.35s var(--ease-playstation);
+    will-change: transform;
+}
+
+.game-card {
+    position: relative;
+    width: 250px;
+    height: 330px;
+    flex-shrink: 0;
+    border-radius: 18px;
+    background: var(--ps-bg-card);
+    border: 2px solid var(--ps-card-border);
+    backdrop-filter: blur(16px);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s var(--ease-playstation), border-color 0.3s ease, box-shadow 0.3s ease;
+    will-change: transform, box-shadow;
+}
+
+.game-card:hover, .game-card.active {
+    transform: scale(1.09) translateY(-8px);
+    border-color: var(--ps-cyan-glow);
+    box-shadow: 0 16px 36px rgba(0, 112, 209, 0.45), 0 0 20px rgba(0, 169, 224, 0.3);
+    z-index: 20;
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.card-type {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ps-text-dim);
+}
+
+/* Physical Disc Visual Graphic */
+.disc-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+}
+
+.spinning-disc {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #1A2844 25%, #0B132B 45%, #1A2844 70%, #060A14 100%);
+    border: 3px solid #0070D1;
+    position: relative;
+    box-shadow: 0 0 24px rgba(0, 112, 209, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinning-disc.spinning {
+    animation: spinDisc 6s linear infinite;
+}
+
+@keyframes spinDisc {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.disc-hole {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #050811;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.disc-shine {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(from 45deg, transparent 0deg, rgba(255, 255, 255, 0.18) 40deg, transparent 80deg, rgba(0, 169, 224, 0.2) 180deg, transparent 220deg);
+}
+
+.card-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.card-title {
+    font-size: 17px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-subtitle {
+    font-size: 12px;
+    color: var(--ps-text-dim);
+}
+
+/* Digital Game Card Poster Artwork */
+.poster-art {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    z-index: 1;
+    opacity: 0.35;
+    transition: opacity 0.3s ease;
+}
+
+.game-card.active .poster-art {
+    opacity: 0.55;
+}
+
+/* ==========================================================================
+   Bottom Controller Action Bar
+   ========================================================================== */
+.bottom-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 70px;
+    background: rgba(5, 8, 17, 0.85);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 56px;
+    gap: 36px;
+    z-index: 30;
+}
+
+.prompt-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ps-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
+}
+
+.ps-btn-cross { color: var(--btn-cross); border: 1.5px solid var(--btn-cross); }
+.ps-btn-circle { color: var(--btn-circle); border: 1.5px solid var(--btn-circle); }
+.ps-btn-square { color: var(--btn-square); border: 1.5px solid var(--btn-square); }
+.ps-btn-triangle { color: var(--btn-triangle); border: 1.5px solid var(--btn-triangle); }
+
+.prompt-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #E2E8F0;
+}

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PlayStation Console</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=SST:wght@400;500;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="ps-console-body">
+    <!-- Ambient Canvas: Flowing PlayStation Wave -->
+    <canvas id="psWaveCanvas" class="ambient-canvas"></canvas>
+
+    <!-- Top Status Bar -->
+    <header class="top-nav">
+        <div class="user-profile">
+            <div class="avatar-ring">
+                <div class="avatar-icon">🎮</div>
+            </div>
+            <div class="user-meta">
+                <span class="user-name">PlayStation Console</span>
+                <span class="status-indicator"><span class="status-dot"></span> Online</span>
+            </div>
+        </div>
+
+        <div class="system-status-pill" id="opticalDrivePill">
+            <span class="disc-icon" id="statusDiscIcon">💿</span>
+            <span class="status-text" id="statusDiscText">Checking Drive...</span>
+        </div>
+
+        <div class="system-info">
+            <div class="controller-status" id="controllerStatus">
+                <span class="ctrl-icon">🎮</span>
+                <span class="ctrl-label">Connected</span>
+            </div>
+            <div class="clock" id="systemClock">12:00 PM</div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="console-viewport">
+        <!-- Hero Details Panel (Dynamically updates based on focused tile) -->
+        <section class="hero-details">
+            <div class="badge-row">
+                <span class="platform-badge" id="heroPlatformBadge">PLAYSTATION 2</span>
+                <span class="serial-badge" id="heroSerialBadge">SLUS-20062</span>
+                <span class="format-badge" id="heroFormatBadge">PHYSICAL DISC</span>
+            </div>
+            <h1 class="hero-title" id="heroTitle">Insert PlayStation Disc</h1>
+            <p class="hero-description" id="heroDescription">
+                Insert an original PlayStation 1 or 2 game disc into your optical drive to start playing instantly.
+            </p>
+        </section>
+
+        <!-- Horizontal Game Ribbon / Carousel -->
+        <section class="carousel-container">
+            <div class="carousel-track" id="carouselTrack">
+                <!-- Physical Disc Hero Tile (Slot 0) -->
+                <div class="game-card disc-card active" data-index="0" id="discCard" tabindex="0">
+                    <div class="disc-glow"></div>
+                    <div class="card-inner">
+                        <div class="card-header">
+                            <span class="card-badge" id="discCardBadge">DRIVE D:</span>
+                            <span class="card-type" id="discCardType">OPTICAL</span>
+                        </div>
+                        <div class="disc-visual">
+                            <div class="spinning-disc" id="spinningDiscGraphic">
+                                <div class="disc-hole"></div>
+                                <div class="disc-shine"></div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                            <h3 class="card-title" id="discCardTitle">No Disc Inserted</h3>
+                            <span class="card-subtitle" id="discCardSubtitle">Insert PS1 / PS2 disc</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Digital Library Tiles will be dynamically injected here -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Controller Action Prompts -->
+    <footer class="bottom-bar">
+        <div class="prompt-item">
+            <span class="ps-btn ps-btn-cross">✕</span>
+            <span class="prompt-text">Play</span>
+        </div>
+        <div class="prompt-item">
+            <span class="ps-btn ps-btn-circle">○</span>
+            <span class="prompt-text">Back</span>
+        </div>
+        <div class="prompt-item">
+            <span class="ps-btn ps-btn-square">□</span>
+            <span class="prompt-text" id="actionSquareLabel">Eject / Scan</span>
+        </div>
+        <div class="prompt-item">
+            <span class="ps-btn ps-btn-triangle">△</span>
+            <span class="prompt-text">Refresh Library</span>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

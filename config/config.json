@@ -1,0 +1,129 @@
+{
+  "version": "1.2.0",
+  "emulators": {
+    "ps1": {
+      "name": "DuckStation",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\DuckStation\\duckstation-qt-x64-ReleaseLTCG.exe",
+        "%LOCALAPPDATA%\\DuckStation\\duckstation-qt.exe",
+        "%PROGRAMFILES%\\DuckStation\\duckstation-qt.exe",
+        "%LOCALAPPDATA%\\Programs\\DuckStation\\duckstation-qt.exe"
+      ],
+      "cli_args_disc": [
+        "-batch",
+        "-fullscreen",
+        "--",
+        "{target}"
+      ],
+      "cli_args_file": [
+        "-batch",
+        "-fullscreen",
+        "--",
+        "{target}"
+      ],
+      "bios_candidates": [
+        "%USERPROFILE%\\Documents\\DuckStation\\bios",
+        "%LOCALAPPDATA%\\DuckStation\\bios",
+        "%APPDATA%\\DuckStation\\bios"
+      ],
+      "required_bios_patterns": [
+        "scph*.bin",
+        "SCPH*.BIN",
+        "ps-*.bin",
+        "PSX*.BIN"
+      ]
+    },
+    "ps2": {
+      "name": "PCSX2",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\PCSX2\\pcsx2-qt.exe",
+        "%PROGRAMFILES%\\PCSX2\\pcsx2-qt.exe",
+        "%LOCALAPPDATA%\\PCSX2\\pcsx2-qt.exe",
+        "%PROGRAMFILES(X86)%\\PCSX2\\pcsx2-qt.exe"
+      ],
+      "cli_args_disc": [
+        "-batch",
+        "-fullscreen",
+        "-disc",
+        "{target}"
+      ],
+      "cli_args_file": [
+        "-batch",
+        "-fullscreen",
+        "{target}"
+      ],
+      "bios_candidates": [
+        "%USERPROFILE%\\Documents\\PCSX2\\bios",
+        "%LOCALAPPDATA%\\PCSX2\\bios",
+        "%APPDATA%\\PCSX2\\bios"
+      ],
+      "required_bios_patterns": [
+        "scph*.bin",
+        "SCPH*.BIN",
+        "SCPH*.bin",
+        "rom1.bin"
+      ]
+    },
+    "ps3": {
+      "name": "RPCS3",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\RPCS3\\rpcs3.exe",
+        "%LOCALAPPDATA%\\RPCS3\\rpcs3.exe",
+        "%PROGRAMFILES%\\RPCS3\\rpcs3.exe"
+      ],
+      "cli_args_disc": [
+        "--fullscreen",
+        "{target}"
+      ],
+      "cli_args_file": [
+        "--fullscreen",
+        "{target}"
+      ],
+      "firmware_installed_path": "%LOCALAPPDATA%\\rpcs3\\dev_flash"
+    },
+    "ps4": {
+      "name": "shadPS4",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\shadPS4\\shadPS4.exe",
+        "%LOCALAPPDATA%\\shadPS4\\shadPS4.exe",
+        "%PROGRAMFILES%\\shadPS4\\shadPS4.exe",
+        "%LOCALAPPDATA%\\fpPS4\\fpPS4.exe"
+      ],
+      "cli_args_file": [
+        "-g",
+        "{target}"
+      ]
+    }
+  },
+  "detector": {
+    "ready_timeout_seconds": 15,
+    "ready_retry_interval_seconds": 1.0,
+    "debounce_seconds": 3.0,
+    "allowed_drive_letters": []
+  },
+  "controller": {
+    "enabled": true,
+    "shortcut": "SELECT_START",
+    "hold_time_seconds": 1.8,
+    "poll_interval_seconds": 0.05
+  },
+  "dashboard": {
+    "enabled": true,
+    "port": 8088,
+    "host": "127.0.0.1",
+    "auto_launch_kiosk": true
+  },
+  "library": {
+    "ps1_dir": "%USERPROFILE%\\Games\\PlayStation\\PS1",
+    "ps2_dir": "%USERPROFILE%\\Games\\PlayStation\\PS2",
+    "ps3_dir": "%USERPROFILE%\\Games\\PlayStation\\PS3",
+    "ps4_dir": "%USERPROFILE%\\Games\\PlayStation\\PS4"
+  },
+  "logging": {
+    "level": "INFO",
+    "log_dir": "%LOCALAPPDATA%\\PlayStationConsole\\logs",
+    "filename": "psconsole.log",
+    "max_bytes": 5242880,
+    "backup_count": 3
+  }
+}
