@@ -11,6 +11,15 @@ from typing import Optional, Dict
 
 # Embedded database of major PS1 and PS2 titles across NTSC-U, PAL, and NTSC-J
 KNOWN_TITLES: Dict[str, str] = {
+    # --- Xbox 360 Classics ---
+    "454109F8": "FIFA 18 - Legacy Edition",
+    "454109EB": "FIFA 18 - Legacy Edition",
+    "5451085D": "WWE SmackDown vs. Raw 2011",
+    "5451085C": "WWE SmackDown vs. Raw 2011",
+    "454109B6": "FIFA 14",
+    "4D5307D5": "Gears of War",
+    "4D53085B": "Halo 3",
+
     # --- PlayStation 1 Classics ---
     "SLUS-00067": "Castlevania: Symphony of the Night",
     "SLUS-00402": "Metal Gear Solid (Disc 1)",

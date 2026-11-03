@@ -67,6 +67,39 @@ class TestLibraryAndDashboard(unittest.TestCase):
         ps2_games = [g for g in games if g.platform == "PS2"]
         self.assertTrue(any("Final Fantasy X" in g.title for g in ps2_games))
 
+    def test_xbox360_and_root_library_scanning(self):
+        # Create xbox360 folder with ISO and companion Vimm's Lair.txt
+        xbox360_dir = os.path.join(self.lib_dir, "xbox360")
+        os.makedirs(xbox360_dir, exist_ok=True)
+        fifa_iso = os.path.join(xbox360_dir, "FIFA 18 - Legacy Edition (USA) (En,Fr,Es).iso")
+        with open(fifa_iso, "wb") as f:
+            f.write(b"MOCK_FIFA_18_ISO_DATA")
+        with open(os.path.join(xbox360_dir, "Vimm's Lair.txt"), "w") as f:
+            f.write("This Xbox 360 media is verified by Redump.\nFIFA 18 - Legacy Edition (USA) (En,Fr,Es).iso\n")
+
+        # Create loose PS3 folder game in root Library
+        ps3_game_dir = os.path.join(self.lib_dir, "Demons_Souls")
+        os.makedirs(os.path.join(ps3_game_dir, "PS3_GAME"), exist_ok=True)
+        with open(os.path.join(ps3_game_dir, "PS3_DISC.SFB"), "wb") as f:
+            f.write(b"SFB_MAGIC")
+
+        cfg = {
+            "library": {
+                "base_dir": self.lib_dir,
+                "xbox360_dir": xbox360_dir
+            }
+        }
+        scanner = LibraryScanner(cfg)
+        games = scanner.scan_all()
+        titles = {g.title: g for g in games}
+
+        self.assertIn("FIFA 18 - Legacy Edition", titles)
+        self.assertEqual(titles["FIFA 18 - Legacy Edition"].platform, "XBOX360")
+        self.assertEqual(titles["FIFA 18 - Legacy Edition"].format, "ISO")
+
+        # Loose root folder game should also be detected
+        self.assertTrue(any(g.platform == "PS3" and "Demons Souls" in g.title for g in games))
+
     def test_dashboard_server_rest_api(self):
         # Create mock service
         mock_service = MagicMock()

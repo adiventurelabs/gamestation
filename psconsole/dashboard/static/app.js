@@ -264,9 +264,12 @@ function updateHeroDetails() {
         // Digital Game Slot
         const game = libraryGames[currentIndex - 1];
         if (game) {
+            const sizeStr = game.file_size_mb >= 1024 
+                ? (game.file_size_mb / 1024).toFixed(1) + " GB" 
+                : game.file_size_mb + " MB";
             heroPlatformBadge.textContent = game.platform;
             heroPlatformBadge.style.display = "inline-block";
-            heroSerialBadge.textContent = game.serial ? `[${game.serial}]` : `SIZE: ${game.file_size_mb} MB`;
+            heroSerialBadge.textContent = game.serial ? `[${game.serial}]` : `SIZE: ${sizeStr}`;
             heroSerialBadge.style.display = "inline-block";
             heroFormatBadge.textContent = `${game.format} FILE`;
             heroTitle.textContent = game.title;
@@ -377,8 +380,8 @@ async function fetchStatus() {
                 "PS2": "🎮",
                 "PS3": "⚡",
                 "PS4": "🩸",
-                "XBOX": "🏎️",
-                "XBOX360": "🏎️",
+                "XBOX": "🟢",
+                "XBOX360": "🟢",
                 "PSP": "📱",
                 "GAMECUBE": "🎲",
                 "WII": "🏸",
@@ -505,10 +508,13 @@ async function fetchLibrary() {
                 "N64": "🕹️",
                 "SNES": "👾",
                 "GBA": "🎮",
-                "XBOX": "🏎️",
-                "XBOX360": "🏎️"
+                "XBOX": "🟢",
+                "XBOX360": "🟢"
             };
             const icon = platformIcons[game.platform] || "🎮";
+            const sizeStr = game.file_size_mb >= 1024 
+                ? (game.file_size_mb / 1024).toFixed(1) + " GB" 
+                : game.file_size_mb + " MB";
 
             card.innerHTML = `
                 <div class="poster-art" style="background: ${grad};"></div>
@@ -524,7 +530,7 @@ async function fetchLibrary() {
                     </div>
                     <div class="card-footer">
                         <h3 class="card-title">${game.title}</h3>
-                        <span class="card-subtitle">${game.file_size_mb} MB • Installed</span>
+                        <span class="card-subtitle">${sizeStr} • Installed</span>
                     </div>
                 </div>
             `;

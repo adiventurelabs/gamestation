@@ -8,6 +8,7 @@ execution, and restores foreground launcher focus upon game exit.
 import os
 import sys
 import glob
+import shutil
 import subprocess
 from enum import Enum
 from dataclasses import dataclass
@@ -41,6 +42,7 @@ class EmulatorLauncher:
     def __init__(self, config: Dict[str, Any], logger=None):
         self.config = config
         self.logger = logger
+        self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.active_process: Optional[subprocess.Popen] = None
         self.active_target: Optional[str] = None
         self.active_platform: Optional[str] = None
@@ -192,7 +194,31 @@ class EmulatorLauncher:
         return self._spawn_process(cmd, emu_name, target_desc=disc_info.title)
 
     def launch_digital_game(self, platform: str, file_path: str, title: str = "Digital Game") -> LaunchResult:
-        """Launches a digital game from the library."""
+        """Launches a digital game from the library, automatically extracting archives if needed."""
+        # Auto-extract if it's an archive (.7z or .zip)
+        if file_path.lower().endswith((".7z", ".zip")) and os.path.isfile(file_path):
+            extractor_tool = shutil.which("7zz") or shutil.which("7z")
+            if extractor_tool:
+                target_dir = os.path.join(self.project_root, "Library", platform.lower())
+                os.makedirs(target_dir, exist_ok=True)
+                if self.logger:
+                    self.logger.info(f"Auto-extracting archive {file_path} into {target_dir} before launch...")
+                try:
+                    subprocess.run(
+                        [extractor_tool, "x", file_path, f"-o{target_dir}", "-y"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        check=True
+                    )
+                    # Point file_path to extracted game
+                    for item in os.listdir(target_dir):
+                        if item.lower().endswith((".iso", ".xex", ".pkg", ".cue", ".chd", ".rvz")):
+                            file_path = os.path.join(target_dir, item)
+                            break
+                except Exception as e:
+                    if self.logger:
+                        self.logger.warning(f"Archive auto-extract failed: {e}")
+
         if not os.path.exists(file_path) and not self.config.get("allow_simulation", False):
             return LaunchResult(
                 status=LaunchStatus.FILE_NOT_FOUND,

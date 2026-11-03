@@ -34,5 +34,16 @@ Thumbs.db
 *.log
 psconsole_overlay_state.pid
 
-# Ingested game library cache
+# Ingested game library cache and ROM images
 library/
+Library/
+*.iso
+*.7z
+*.zip
+*.bin
+*.cue
+*.chd
+*.rvz
+*.cso
+*.wbfs
+*.pbp
