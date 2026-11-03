@@ -182,7 +182,6 @@ class LibraryScanner:
             os.path.join(self.project_root, "Library"),
             os.path.join(self.project_root, "library")
         ])
-        demo_base = os.path.join(self.project_root, "demo_games")
 
         result: Dict[str, List[str]] = {}
 
@@ -198,8 +197,10 @@ class LibraryScanner:
             for b in default_bases:
                 candidates.append(os.path.join(b, plat_folder))
 
-            # 3. Project demo_games folder
-            candidates.append(os.path.join(demo_base, plat_folder))
+            # 3. Optional demo_games folder (disabled by default)
+            if lib_cfg.get("include_demos", False):
+                demo_base = os.path.join(self.project_root, "demo_games")
+                candidates.append(os.path.join(demo_base, plat_folder))
 
             result[plat_key] = self._get_unique_directories(candidates)
 
@@ -552,7 +553,9 @@ class LibraryScanner:
                     if any(base_stem.lower() in t for t in existing_titles) or clean_name.lower() in existing_titles:
                         continue
 
-                    plat_hint = self._detect_archive_platform(full_path, item) or "XBOX360"
+                    plat_hint = self._detect_archive_platform(full_path, item)
+                    if not plat_hint:
+                        continue
                     size_mb = os.path.getsize(full_path) / (1024 * 1024)
                     clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", clean_name.lower())[:25]
                     games.append(self._create_library_game(
