@@ -15,6 +15,50 @@ from typing import Optional, Dict, Any
 
 # Curated high-fidelity metadata for library games
 KNOWN_METADATA: Dict[str, Dict[str, Any]] = {
+    "far cry 4": {
+        "title": "Far Cry 4",
+        "cover_art": "/covers/far_cry_4.jpg",
+        "genre": "First-Person Shooter / Open World",
+        "players": "1-2 Players (Drop-in Co-op)",
+        "developer": "Ubisoft Montreal",
+        "publisher": "Ubisoft",
+        "release_year": "2014",
+        "rating": "ESRB: Mature (17+)",
+        "description": "Hidden in the towering Himalayas lies Kyrat, a country steeped in tradition and violence. You are Ajay Ghale, traveling to Kyrat to fulfill your mother's dying wish, only to find yourself caught in a civil war to overthrow the despotic regime of Pagan Min."
+    },
+    "halo 4": {
+        "title": "Halo 4",
+        "cover_art": "/covers/halo_4.jpg",
+        "genre": "First-Person Shooter / Sci-Fi",
+        "players": "1-4 Players (Split-Screen Co-op & War Games)",
+        "developer": "343 Industries",
+        "publisher": "Microsoft Studios",
+        "release_year": "2012",
+        "rating": "ESRB: Mature (17+)",
+        "description": "The Master Chief returns to face his own destiny and an ancient evil that threatens the fate of the entire universe. Shipwrecked on a mysterious Forerunner world with Cortana, battle Promethean knights and unravel ancient galactic secrets."
+    },
+    "halo 4 (disc 1)": {
+        "title": "Halo 4 (Disc 1 - Campaign)",
+        "cover_art": "/covers/halo_4.jpg",
+        "genre": "First-Person Shooter / Sci-Fi",
+        "players": "1-4 Players (Split-Screen Co-op)",
+        "developer": "343 Industries",
+        "publisher": "Microsoft Studios",
+        "release_year": "2012",
+        "rating": "ESRB: Mature (17+)",
+        "description": "The Master Chief awakens aboard the Forward Unto Dawn to defend Cortana against Covenant remnants and the awakening Didact in the epic single-player and co-op campaign."
+    },
+    "halo 4 (disc 2)": {
+        "title": "Halo 4 (Disc 2 - War Games & Spartan Ops)",
+        "cover_art": "/covers/halo_4.jpg",
+        "genre": "First-Person Shooter / Multiplayer",
+        "players": "1-4 Players (Split-Screen War Games)",
+        "developer": "343 Industries",
+        "publisher": "Microsoft Studios",
+        "release_year": "2012",
+        "rating": "ESRB: Mature (17+)",
+        "description": "War Games competitive multiplayer and episodic Spartan Ops cooperative missions on the UNSC Infinity combat deck."
+    },
     "assassin's creed iv - black flag": {
         "title": "Assassin's Creed IV - Black Flag",
         "cover_art": "/covers/ac4.jpg",

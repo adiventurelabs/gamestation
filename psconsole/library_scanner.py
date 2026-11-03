@@ -108,7 +108,14 @@ class LibraryScanner:
             st = os.stat(file_path)
             cache_key = f"{file_path}_{st.st_mtime}_{st.st_size}"
             if cache_key in self._cache:
-                return LibraryGame(**self._cache[cache_key])
+                cached = self._cache[cache_key]
+                # If cached entry is missing rich metadata (e.g. genre or developer), check if metadata is now known
+                if not cached.get("genre") or not cached.get("developer"):
+                    meta = self.metadata_mgr.resolve_game_metadata(cached.get("title", title), platform, file_path, serial)
+                    if meta.get("genre"):
+                        cached.update({k: v for k, v in meta.items() if v is not None})
+                        self._cache[cache_key] = cached
+                return LibraryGame(**cached)
         except Exception:
             pass
 
@@ -242,11 +249,93 @@ class LibraryScanner:
                 if not is_seen(g.file_path):
                     games.append(g)
 
+        games = self._consolidate_multi_disc_games(games)
         self._save_cache()
         return games
 
+    def _consolidate_multi_disc_games(self, games: List[LibraryGame]) -> List[LibraryGame]:
+        """
+        Consolidates multi-disc sets (e.g. Halo 4 Disc 1 + Disc 2) into a single unified game entry.
+        Combines total file size and assigns the primary boot disc (Disc 1) as launch target.
+        """
+        groups: Dict[Tuple[str, str], List[Tuple[int, str, LibraryGame, bool]]] = {}
+        for g in games:
+            # Extract disc number if present (e.g. "Halo 4 (Disc 1)", "Halo 4 (Disc 1 - Campaign)")
+            m = re.search(r"\(Disc\s*(\d+).*?\)", g.title, re.IGNORECASE)
+            if not m:
+                m = re.search(r"\bDisc\s*(\d+)\b", g.title, re.IGNORECASE)
+
+            if m:
+                disc_num = int(m.group(1))
+                has_disc_tag = True
+                # Strip (Disc ...) to get base title
+                base_title = re.sub(r"\(Disc\s*\d+.*?\)", "", g.title, flags=re.IGNORECASE).strip()
+                base_title = re.sub(r"\bDisc\s*\d+\b", "", base_title, flags=re.IGNORECASE).strip(" -")
+            else:
+                base_title = g.title
+                disc_num = 1
+                has_disc_tag = False
+
+            key = (g.platform.upper(), base_title.lower())
+            if key not in groups:
+                groups[key] = []
+            groups[key].append((disc_num, base_title, g, has_disc_tag))
+
+        consolidated: List[LibraryGame] = []
+        for key, disc_list in groups.items():
+            if len(disc_list) == 1:
+                consolidated.append(disc_list[0][2])
+                continue
+
+            # Verify if this group actually represents multiple discs (at least one disc tag or disc_num > 1)
+            is_multi_disc = any(item[3] or item[0] > 1 for item in disc_list)
+            if not is_multi_disc:
+                # Duplicate paths/scans of the same single-disc game: preserve primary
+                consolidated.append(disc_list[0][2])
+                continue
+
+            # Sort so Disc 1 is primary
+            disc_list.sort(key=lambda x: x[0])
+            primary_disc_num, base_title, primary_game, _ = disc_list[0]
+
+            total_size = sum(x[2].file_size_mb for x in disc_list)
+            num_discs = len(disc_list)
+
+            # Enrich with curated metadata for base_title (e.g. "Halo 4")
+            meta = self.metadata_mgr.resolve_game_metadata(
+                base_title, primary_game.platform, primary_game.file_path, primary_game.serial
+            )
+
+            unified_title = meta.get("title") or base_title
+            clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", unified_title.lower())[:25]
+
+            unified_game = LibraryGame(
+                id=f"{primary_game.platform.lower()}_{clean_id}",
+                title=unified_title,
+                platform=primary_game.platform,
+                file_path=primary_game.file_path,  # Boots Disc 1
+                file_size_mb=round(total_size, 1),
+                format=f"{primary_game.format} ({num_discs} DISCS)",
+                serial=primary_game.serial,
+                cover_art=meta.get("cover_art") or primary_game.cover_art,
+                release_year=meta.get("release_year") or primary_game.release_year,
+                hero_art=meta.get("hero_art") or primary_game.hero_art,
+                genre=meta.get("genre") or primary_game.genre,
+                players=meta.get("players") or primary_game.players,
+                developer=meta.get("developer") or primary_game.developer,
+                publisher=meta.get("publisher") or primary_game.publisher,
+                rating=meta.get("rating") or primary_game.rating,
+                description=meta.get("description") or primary_game.description
+            )
+            consolidated.append(unified_game)
+
+        return consolidated
+
     def _clean_game_title(self, raw_stem: str) -> str:
         """Cleans regional tags, brackets, parens, and standardizes title capitalization."""
+        disc_match = re.search(r"\b(disc\s*\d+|cd\s*\d+)\b", raw_stem, re.IGNORECASE)
+        disc_suffix = f" ({disc_match.group(1).title()})" if disc_match else ""
+
         if raw_stem.lower().endswith(".dec"):
             raw_stem = raw_stem[:-4]
         cleaned = re.sub(r"\[[^\]]*\]|\([^\)]*\)", "", raw_stem).strip()
@@ -271,7 +360,8 @@ class LibraryScanner:
             else:
                 fixed.append(w.capitalize())
 
-        return " ".join(fixed) if fixed else raw_stem
+        res = " ".join(fixed) if fixed else raw_stem
+        return res + disc_suffix
 
     def _scan_platform_folder(self, platform: str, folder: str) -> List[LibraryGame]:
         games: List[LibraryGame] = []
@@ -456,8 +546,10 @@ class LibraryScanner:
                 # Check for unextracted archive (.7z, .zip)
                 if ext in (".7z", ".zip"):
                     clean_name = self._clean_game_title(raw_stem)
+                    base_stem = re.sub(r"\(Disc\s*\d+.*?\)", "", clean_name, flags=re.IGNORECASE).strip()
+                    base_stem = re.sub(r"\bDisc\s*\d+\b", "", base_stem, flags=re.IGNORECASE).strip(" -")
                     # If game is already indexed from extracted files, skip the archive
-                    if clean_name.lower() in existing_titles:
+                    if any(base_stem.lower() in t for t in existing_titles) or clean_name.lower() in existing_titles:
                         continue
 
                     plat_hint = self._detect_archive_platform(full_path, item) or "XBOX360"

@@ -5,10 +5,11 @@
     "ps1": {
       "name": "DuckStation",
       "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\DuckStation\\duckstation-qt.exe",
         "%LOCALAPPDATA%\\DuckStation\\duckstation-qt-x64-ReleaseLTCG.exe",
         "%LOCALAPPDATA%\\DuckStation\\duckstation-qt.exe",
         "%PROGRAMFILES%\\DuckStation\\duckstation-qt.exe",
-        "%LOCALAPPDATA%\\Programs\\DuckStation\\duckstation-qt.exe"
+        "emulators\\DuckStation\\duckstation-qt.exe"
       ],
       "cli_args_disc": [
         "-batch",
@@ -38,9 +39,10 @@
       "name": "PCSX2",
       "executable_candidates": [
         "%LOCALAPPDATA%\\Programs\\PCSX2\\pcsx2-qt.exe",
-        "%PROGRAMFILES%\\PCSX2\\pcsx2-qt.exe",
         "%LOCALAPPDATA%\\PCSX2\\pcsx2-qt.exe",
-        "%PROGRAMFILES(X86)%\\PCSX2\\pcsx2-qt.exe"
+        "%PROGRAMFILES%\\PCSX2\\pcsx2-qt.exe",
+        "%PROGRAMFILES(X86)%\\PCSX2\\pcsx2-qt.exe",
+        "emulators\\PCSX2\\pcsx2-qt.exe"
       ],
       "cli_args_disc": [
         "-batch",
@@ -70,7 +72,8 @@
       "executable_candidates": [
         "%LOCALAPPDATA%\\Programs\\RPCS3\\rpcs3.exe",
         "%LOCALAPPDATA%\\RPCS3\\rpcs3.exe",
-        "%PROGRAMFILES%\\RPCS3\\rpcs3.exe"
+        "%PROGRAMFILES%\\RPCS3\\rpcs3.exe",
+        "emulators\\RPCS3\\rpcs3.exe"
       ],
       "cli_args_disc": [
         "--fullscreen",
@@ -111,10 +114,14 @@
     "xbox360": {
       "name": "Xenia",
       "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\xenia\\xenia_canary.exe",
         "%LOCALAPPDATA%\\Programs\\xenia\\xenia.exe",
         "%LOCALAPPDATA%\\xenia\\xenia_canary.exe",
         "%LOCALAPPDATA%\\xenia\\xenia.exe",
-        "%PROGRAMFILES%\\xenia\\xenia.exe"
+        "%PROGRAMFILES%\\xenia\\xenia_canary.exe",
+        "%PROGRAMFILES%\\xenia\\xenia.exe",
+        "emulators\\xenia\\xenia_canary.exe",
+        "emulators\\xenia\\xenia.exe"
       ],
       "cli_args_file": [
         "--fullscreen",

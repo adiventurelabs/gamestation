@@ -73,8 +73,8 @@ if errorlevel 1 (
     %PY_CMD% -m pip install -r requirements.txt --quiet --disable-pip-version-check
 )
 
-:: 4. Verify Local Emulators & Cache
-%PY_CMD% windows_setup_and_verify.py
+:: 4. Verify Local Emulators, Dual Xbox Controllers & Cache
+%PY_CMD% -m psconsole.windows_setup
 
 :: 5. Launch Fullscreen Console App in Browser
 echo.

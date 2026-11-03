@@ -38,6 +38,7 @@ psconsole_overlay_state.pid
 library/
 Library/
 demo_games/
+emulators/
 *.iso
 *.dec.iso
 *.7z
