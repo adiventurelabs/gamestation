@@ -240,7 +240,7 @@
   },
   "logging": {
     "level": "INFO",
-    "log_dir": "%LOCALAPPDATA%\\PlayStationConsole\\logs",
+    "log_dir": "%LOCALAPPDATA%\\GameStation\\logs",
     "filename": "psconsole.log",
     "max_bytes": 5242880,
     "backup_count": 3

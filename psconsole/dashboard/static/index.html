@@ -43,22 +43,68 @@
 
     <!-- Main Content Area -->
     <main class="console-viewport">
-        <!-- Hero Details Panel (Dynamically updates based on focused tile) -->
-        <section class="hero-details">
-            <div class="badge-row">
-                <span class="platform-badge" id="heroPlatformBadge">GAMESTATION</span>
-                <span class="serial-badge" id="heroSerialBadge">READY</span>
-                <span class="format-badge" id="heroFormatBadge">PHYSICAL DISC</span>
+        <!-- Xbox Game Pass / Plex Filter Bar & Search -->
+        <section class="library-controls-bar">
+            <div class="category-pills" id="categoryPills">
+                <button class="cat-pill active" data-filter="all">🎮 All Games <span class="pill-count" id="countAll">0</span></button>
+                <button class="cat-pill multi-pill" data-filter="multiplayer">👥 2+ Players (Couch Co-op) <span class="pill-count" id="countMulti">0</span></button>
+                <button class="cat-pill" data-filter="XBOX360">Xbox 360</button>
+                <button class="cat-pill" data-filter="PS3">PlayStation 3</button>
+                <button class="cat-pill" data-filter="PS2">PlayStation 2</button>
+                <button class="cat-pill" data-filter="PS1">PlayStation 1</button>
+                <button class="cat-pill" data-filter="XBOX">Xbox</button>
+                <button class="cat-pill" data-filter="RETRO">Nintendo & Sega</button>
             </div>
-            <h1 class="hero-title" id="heroTitle">Insert Game Disc</h1>
-            <p class="hero-description" id="heroDescription">
-                Insert an original PlayStation or Xbox game disc into your optical drive to start playing instantly.
-            </p>
-            <div class="hero-actions">
-                <button class="hero-play-btn" id="heroPlayBtn">
-                    <span class="hero-play-icon" id="heroPlayIcon">▶</span>
-                    <span id="heroPlayBtnText">Play Game</span>
-                </button>
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search games, genres, players..." autocomplete="off">
+                <button class="search-clear-btn" id="searchClearBtn" title="Clear search" style="display: none;">✕</button>
+            </div>
+        </section>
+
+        <!-- Hero Details Panel (Dynamically updates based on focused tile) -->
+        <section class="hero-details" id="heroDetailsSection">
+            <div class="hero-content">
+                <div class="badge-row">
+                    <span class="platform-badge" id="heroPlatformBadge">GAMESTATION</span>
+                    <span class="players-badge" id="heroPlayersBadge">👥 1-4 Players</span>
+                    <span class="genre-badge" id="heroGenreBadge">SPORTS</span>
+                    <span class="year-badge" id="heroYearBadge">2018</span>
+                    <span class="rating-badge" id="heroRatingBadge">ESRB: EVERYONE</span>
+                </div>
+                <h1 class="hero-title" id="heroTitle">Insert Game Disc</h1>
+                <div class="hero-dev-row" id="heroDevRow" style="display: none;">
+                    <span class="hero-developer" id="heroDeveloper">EA Canada</span>
+                    <span class="hero-dot">•</span>
+                    <span class="hero-publisher" id="heroPublisher">EA Sports</span>
+                </div>
+                <p class="hero-description" id="heroDescription">
+                    Insert an original PlayStation or Xbox game disc into your optical drive to start playing instantly.
+                </p>
+                <div class="hero-actions">
+                    <button class="hero-play-btn" id="heroPlayBtn">
+                        <span class="hero-play-icon" id="heroPlayIcon">▶</span>
+                        <span id="heroPlayBtnText">Play Game</span>
+                    </button>
+                    <button class="hero-sub-btn" id="heroSubBtn" style="display: none;">
+                        <span class="hero-sub-icon">ℹ️</span>
+                        <span>Game Info</span>
+                    </button>
+                </div>
+            </div>
+            <div class="hero-poster-wrapper" id="heroPosterWrapper">
+                <div class="hero-poster-card" id="heroPosterCard">
+                    <img src="" alt="Cover Art" id="heroPosterImg" class="hero-poster-img" style="display: none;">
+                    <div class="hero-poster-fallback" id="heroPosterFallback">
+                        <div class="fallback-disc-visual">
+                            <div class="spinning-disc mini-disc" id="heroMiniDisc">
+                                <div class="disc-hole"></div>
+                                <div class="disc-shine"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hero-poster-glow" id="heroPosterGlow"></div>
+                </div>
             </div>
         </section>
 
@@ -93,21 +139,26 @@
 
     <!-- Bottom Controller Action Prompts -->
     <footer class="bottom-bar">
-        <div class="prompt-item" id="btnPromptPlay" role="button" tabindex="0">
-            <span class="ps-btn ps-btn-cross">✕</span>
-            <span class="prompt-text">Play</span>
+        <div class="prompt-group-left">
+            <span class="controller-hint-pill">🎮 Dual Xbox 360 / XInput Ready</span>
         </div>
-        <div class="prompt-item" id="btnPromptBack" role="button" tabindex="0">
-            <span class="ps-btn ps-btn-circle">○</span>
-            <span class="prompt-text">Back</span>
-        </div>
-        <div class="prompt-item" id="btnPromptSquare" role="button" tabindex="0">
-            <span class="ps-btn ps-btn-square">□</span>
-            <span class="prompt-text" id="actionSquareLabel">Disc Tray</span>
-        </div>
-        <div class="prompt-item" id="btnPromptRefresh" role="button" tabindex="0">
-            <span class="ps-btn ps-btn-triangle">△</span>
-            <span class="prompt-text">Refresh</span>
+        <div class="prompt-group-right">
+            <div class="prompt-item" id="btnPromptPlay" role="button" tabindex="0">
+                <span class="ctrl-btn-combo"><span class="xb-btn xb-btn-a">A</span> <span class="ps-btn ps-btn-cross">✕</span></span>
+                <span class="prompt-text">Play</span>
+            </div>
+            <div class="prompt-item" id="btnPromptBack" role="button" tabindex="0">
+                <span class="ctrl-btn-combo"><span class="xb-btn xb-btn-b">B</span> <span class="ps-btn ps-btn-circle">○</span></span>
+                <span class="prompt-text">Back</span>
+            </div>
+            <div class="prompt-item" id="btnPromptSquare" role="button" tabindex="0">
+                <span class="ctrl-btn-combo"><span class="xb-btn xb-btn-x">X</span> <span class="ps-btn ps-btn-square">□</span></span>
+                <span class="prompt-text" id="actionSquareLabel">Disc Tray</span>
+            </div>
+            <div class="prompt-item" id="btnPromptRefresh" role="button" tabindex="0">
+                <span class="ctrl-btn-combo"><span class="xb-btn xb-btn-y">Y</span> <span class="ps-btn ps-btn-triangle">△</span></span>
+                <span class="prompt-text">Refresh</span>
+            </div>
         </div>
     </footer>
 

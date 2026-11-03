@@ -7,7 +7,10 @@
 // Global State
 let currentIndex = 0;
 let cards = [];
-let libraryGames = [];
+let allLibraryGames = [];
+let filteredGames = [];
+let activeFilter = "all";
+let searchQuery = "";
 let discState = { present: false, title: "No Disc Inserted", type: "OPTICAL", serial: "" };
 let isAudioEnabled = false;
 let audioMuted = false;
@@ -17,8 +20,15 @@ const carouselTrack = document.getElementById("carouselTrack");
 const heroTitle = document.getElementById("heroTitle");
 const heroDescription = document.getElementById("heroDescription");
 const heroPlatformBadge = document.getElementById("heroPlatformBadge");
-const heroSerialBadge = document.getElementById("heroSerialBadge");
-const heroFormatBadge = document.getElementById("heroFormatBadge");
+const heroPlayersBadge = document.getElementById("heroPlayersBadge");
+const heroGenreBadge = document.getElementById("heroGenreBadge");
+const heroYearBadge = document.getElementById("heroYearBadge");
+const heroRatingBadge = document.getElementById("heroRatingBadge");
+const heroDevRow = document.getElementById("heroDevRow");
+const heroDeveloper = document.getElementById("heroDeveloper");
+const heroPublisher = document.getElementById("heroPublisher");
+const heroPosterImg = document.getElementById("heroPosterImg");
+const heroPosterFallback = document.getElementById("heroPosterFallback");
 const heroPlayBtn = document.getElementById("heroPlayBtn");
 const heroPlayBtnText = document.getElementById("heroPlayBtnText");
 const heroPlayIcon = document.getElementById("heroPlayIcon");
@@ -28,6 +38,11 @@ const opticalDrivePill = document.getElementById("opticalDrivePill");
 const statusDiscText = document.getElementById("statusDiscText");
 const statusDiscIcon = document.getElementById("statusDiscIcon");
 const systemClock = document.getElementById("systemClock");
+const categoryPillsContainer = document.getElementById("categoryPills");
+const searchInput = document.getElementById("searchInput");
+const searchClearBtn = document.getElementById("searchClearBtn");
+const countAll = document.getElementById("countAll");
+const countMulti = document.getElementById("countMulti");
 
 // ==========================================================================
 // 1. Web Audio API Synthesizer (Authentic Console Sound FX)
@@ -238,44 +253,115 @@ function updateSelection(newIndex, playAudio = true) {
     updateHeroDetails();
 }
 
+function isMultiplayerGame(game) {
+    if (!game) return false;
+    const str = `${game.players || ''} ${game.title || ''}`.toLowerCase();
+    return str.includes("2") || str.includes("3") || str.includes("4") || 
+           str.includes("multi") || str.includes("co-op") || str.includes("versus") || 
+           str.includes("rumble") || str.includes("split-screen") || str.includes("free-for-all");
+}
+
 function updateHeroDetails() {
     if (currentIndex === 0) {
         // Physical Disc Slot
         if (discState.present) {
-            heroPlatformBadge.textContent = discState.type;
-            heroPlatformBadge.style.display = "inline-block";
-            heroSerialBadge.textContent = discState.serial || "RETAIL DISC";
-            heroSerialBadge.style.display = "inline-block";
-            heroFormatBadge.textContent = "OPTICAL MEDIA";
-            heroTitle.textContent = discState.title;
-            heroDescription.textContent = `Physical original ${discState.type} game disc detected in optical drive. Press (✕) / (A) or tap Play Disc to boot.`;
+            if (heroPlatformBadge) {
+                heroPlatformBadge.textContent = discState.type;
+                heroPlatformBadge.style.display = "inline-block";
+            }
+            if (heroPlayersBadge) {
+                heroPlayersBadge.textContent = "👥 1-4 Players";
+                heroPlayersBadge.style.display = "inline-block";
+            }
+            if (heroGenreBadge) {
+                heroGenreBadge.textContent = "OPTICAL DISC";
+                heroGenreBadge.style.display = "inline-block";
+            }
+            if (heroYearBadge) {
+                heroYearBadge.textContent = "RETAIL";
+                heroYearBadge.style.display = "inline-block";
+            }
+            if (heroRatingBadge) {
+                heroRatingBadge.textContent = discState.serial || "ORIGINAL DISC";
+                heroRatingBadge.style.display = "inline-block";
+            }
+            if (heroDevRow) heroDevRow.style.display = "none";
+            if (heroTitle) heroTitle.textContent = discState.title;
+            if (heroDescription) {
+                heroDescription.textContent = `Physical original ${discState.type} game disc detected in optical drive. Press (A) / (✕) to boot.`;
+            }
             if (heroPlayBtnText) heroPlayBtnText.textContent = "Play Disc";
             if (heroPlayIcon) heroPlayIcon.textContent = "▶";
+            if (heroPosterImg) heroPosterImg.style.display = "none";
+            if (heroPosterFallback) heroPosterFallback.style.display = "flex";
         } else {
-            heroPlatformBadge.style.display = "none";
-            heroSerialBadge.style.display = "none";
-            heroFormatBadge.textContent = "OPTICAL DRIVE EMPTY";
-            heroTitle.textContent = "Insert Game Disc";
-            heroDescription.textContent = "Insert an original PlayStation or Xbox physical disc into your drive to start playing automatically.";
+            if (heroPlatformBadge) heroPlatformBadge.style.display = "none";
+            if (heroPlayersBadge) heroPlayersBadge.style.display = "none";
+            if (heroGenreBadge) heroGenreBadge.style.display = "none";
+            if (heroYearBadge) heroYearBadge.style.display = "none";
+            if (heroRatingBadge) heroRatingBadge.style.display = "none";
+            if (heroDevRow) heroDevRow.style.display = "none";
+            if (heroTitle) heroTitle.textContent = "Insert Game Disc";
+            if (heroDescription) {
+                heroDescription.textContent = "Insert an original PlayStation or Xbox physical disc into your drive to start playing automatically, or pick a digital game from your library.";
+            }
             if (heroPlayBtnText) heroPlayBtnText.textContent = "Open Disc Tray";
             if (heroPlayIcon) heroPlayIcon.textContent = "⏏";
+            if (heroPosterImg) heroPosterImg.style.display = "none";
+            if (heroPosterFallback) heroPosterFallback.style.display = "flex";
         }
     } else {
         // Digital Game Slot
-        const game = libraryGames[currentIndex - 1];
+        const game = filteredGames[currentIndex - 1];
         if (game) {
             const sizeStr = game.file_size_mb >= 1024 
                 ? (game.file_size_mb / 1024).toFixed(1) + " GB" 
                 : game.file_size_mb + " MB";
-            heroPlatformBadge.textContent = game.platform;
-            heroPlatformBadge.style.display = "inline-block";
-            heroSerialBadge.textContent = game.serial ? `[${game.serial}]` : `SIZE: ${sizeStr}`;
-            heroSerialBadge.style.display = "inline-block";
-            heroFormatBadge.textContent = `${game.format} FILE`;
-            heroTitle.textContent = game.title;
-            heroDescription.textContent = `Downloaded ${game.platform} title located in your GameStation library. Press (✕) / (A) or tap Play Game.`;
+            if (heroPlatformBadge) {
+                heroPlatformBadge.textContent = game.platform;
+                heroPlatformBadge.style.display = "inline-block";
+            }
+            if (heroPlayersBadge) {
+                heroPlayersBadge.textContent = game.players ? `👥 ${game.players}` : "👥 1 Player";
+                heroPlayersBadge.style.display = "inline-block";
+            }
+            if (heroGenreBadge) {
+                heroGenreBadge.textContent = game.genre ? game.genre.toUpperCase() : "CONSOLE GAME";
+                heroGenreBadge.style.display = "inline-block";
+            }
+            if (heroYearBadge) {
+                heroYearBadge.textContent = game.release_year || "CLASSIC";
+                heroYearBadge.style.display = "inline-block";
+            }
+            if (heroRatingBadge) {
+                heroRatingBadge.textContent = game.rating || "ESRB";
+                heroRatingBadge.style.display = "inline-block";
+            }
+            if (heroDevRow) {
+                if (game.developer || game.publisher) {
+                    heroDevRow.style.display = "flex";
+                    if (heroDeveloper) heroDeveloper.textContent = game.developer || "Original Developer";
+                    if (heroPublisher) heroPublisher.textContent = game.publisher || "Publisher";
+                } else {
+                    heroDevRow.style.display = "none";
+                }
+            }
+            if (heroTitle) heroTitle.textContent = game.title;
+            if (heroDescription) {
+                heroDescription.textContent = game.description || `Installed ${game.platform} title (${sizeStr}) located in your GameStation library. Press (A) / (✕) to launch.`;
+            }
             if (heroPlayBtnText) heroPlayBtnText.textContent = "Play Game";
             if (heroPlayIcon) heroPlayIcon.textContent = "▶";
+
+            // Cover Art Poster
+            if (heroPosterImg && game.cover_art) {
+                heroPosterImg.src = game.cover_art;
+                heroPosterImg.style.display = "block";
+                if (heroPosterFallback) heroPosterFallback.style.display = "none";
+            } else {
+                if (heroPosterImg) heroPosterImg.style.display = "none";
+                if (heroPosterFallback) heroPosterFallback.style.display = "flex";
+            }
         }
     }
 }
@@ -312,7 +398,7 @@ async function launchSelectedGame() {
         }
     } else {
         // Launch Digital Game
-        const game = libraryGames[currentIndex - 1];
+        const game = filteredGames[currentIndex - 1];
         if (!game) return;
 
         try {
@@ -466,114 +552,173 @@ async function fetchLibrary() {
     try {
         const res = await fetch("/api/library");
         const data = await res.json();
-        libraryGames = data.games || [];
+        allLibraryGames = data.games || [];
 
-        // Remove existing digital cards
-        const existingDigitalCards = carouselTrack.querySelectorAll(".digital-card");
-        existingDigitalCards.forEach(c => c.remove());
+        if (countAll) countAll.textContent = allLibraryGames.length;
+        if (countMulti) {
+            const multiCount = allLibraryGames.filter(g => isMultiplayerGame(g)).length;
+            countMulti.textContent = multiCount;
+        }
 
-        // Append new digital cards
-        libraryGames.forEach((game, idx) => {
-            const card = document.createElement("div");
-            card.className = "game-card digital-card";
-            card.dataset.index = idx + 1;
-            card.tabIndex = 0;
-
-            const bgGradients = {
-                "PS1": "linear-gradient(135deg, #00439C, #001A3D)",
-                "PS2": "linear-gradient(135deg, #002244, #0B132B)",
-                "PS3": "linear-gradient(135deg, #8A0000, #2B0505)",
-                "PS4": "linear-gradient(135deg, #0070D1, #003666)",
-                "PSP": "linear-gradient(135deg, #022047, #010D1F)",
-                "GAMECUBE": "linear-gradient(135deg, #6A0DAD, #2E0854)",
-                "WII": "linear-gradient(135deg, #009ACD, #004F6B)",
-                "DREAMCAST": "linear-gradient(135deg, #E65100, #4A1B00)",
-                "N64": "linear-gradient(135deg, #D32F2F, #4A0000)",
-                "SNES": "linear-gradient(135deg, #7C4DFF, #311B92)",
-                "GBA": "linear-gradient(135deg, #4A148C, #1A0033)",
-                "XBOX": "linear-gradient(135deg, #107C10, #063806)",
-                "XBOX360": "linear-gradient(135deg, #2E7D32, #0D3810)"
-            };
-            const grad = bgGradients[game.platform] || bgGradients["PS1"];
-
-            const platformIcons = {
-                "PS1": "🕹️",
-                "PS2": "🎮",
-                "PS3": "⚡",
-                "PS4": "🩸",
-                "PSP": "📱",
-                "GAMECUBE": "🎲",
-                "WII": "🏸",
-                "DREAMCAST": "🌀",
-                "N64": "🕹️",
-                "SNES": "👾",
-                "GBA": "🎮",
-                "XBOX": "🟢",
-                "XBOX360": "🟢"
-            };
-            const icon = platformIcons[game.platform] || "🎮";
-            const sizeStr = game.file_size_mb >= 1024 
-                ? (game.file_size_mb / 1024).toFixed(1) + " GB" 
-                : game.file_size_mb + " MB";
-
-            card.innerHTML = `
-                <div class="poster-art" style="background: ${grad};"></div>
-                <div class="card-inner">
-                    <div class="card-header">
-                        <span class="card-badge">${game.platform}</span>
-                        <span class="card-type">${game.format}</span>
-                    </div>
-                    <div class="disc-visual">
-                        <div style="font-size: 54px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">
-                            ${icon}
-                        </div>
-                    </div>
-                    <div class="card-footer">
-                        <h3 class="card-title">${game.title}</h3>
-                        <span class="card-subtitle">${sizeStr} • Installed</span>
-                    </div>
-                </div>
-            `;
-
-            card.addEventListener("click", () => {
-                initAudio();
-                const cardIndex = idx + 1;
-                if (currentIndex === cardIndex) {
-                    launchSelectedGame();
-                } else {
-                    updateSelection(cardIndex);
-                }
-            });
-
-            carouselTrack.appendChild(card);
-        });
-
-        // Re-index cards array
-        cards = Array.from(carouselTrack.querySelectorAll(".game-card"));
-        updateSelection(currentIndex, false);
+        applyFiltersAndRender(true);
     } catch (e) {
         console.warn("Library fetch failed:", e);
     }
 }
 
+function applyFiltersAndRender(maintainFocus = true) {
+    const q = searchQuery.trim().toLowerCase();
+
+    filteredGames = allLibraryGames.filter(game => {
+        // Platform / category filter
+        if (activeFilter === "multiplayer") {
+            if (!isMultiplayerGame(game)) return false;
+        } else if (activeFilter === "RETRO") {
+            const retro = ["GAMECUBE", "WII", "DREAMCAST", "N64", "SNES", "GBA", "PSP"];
+            if (!retro.includes(game.platform)) return false;
+        } else if (activeFilter !== "all") {
+            if (game.platform !== activeFilter) return false;
+        }
+
+        // Search text query
+        if (q) {
+            const haystack = `${game.title} ${game.platform} ${game.genre || ''} ${game.players || ''} ${game.developer || ''} ${game.publisher || ''}`.toLowerCase();
+            if (!haystack.includes(q)) return false;
+        }
+
+        return true;
+    });
+
+    renderCarouselTrack(maintainFocus);
+}
+
+function renderCarouselTrack(maintainFocus = true) {
+    // Keep disc card (index 0) and remove all existing digital cards
+    const existingDigitalCards = carouselTrack.querySelectorAll(".digital-card");
+    existingDigitalCards.forEach(c => c.remove());
+
+    filteredGames.forEach((game, idx) => {
+        const card = document.createElement("div");
+        card.className = "game-card digital-card";
+        card.dataset.index = idx + 1;
+        card.tabIndex = 0;
+
+        const bgGradients = {
+            "PS1": "linear-gradient(135deg, #00439C, #001A3D)",
+            "PS2": "linear-gradient(135deg, #002244, #0B132B)",
+            "PS3": "linear-gradient(135deg, #8A0000, #2B0505)",
+            "PS4": "linear-gradient(135deg, #0070D1, #003666)",
+            "PSP": "linear-gradient(135deg, #022047, #010D1F)",
+            "GAMECUBE": "linear-gradient(135deg, #6A0DAD, #2E0854)",
+            "WII": "linear-gradient(135deg, #009ACD, #004F6B)",
+            "DREAMCAST": "linear-gradient(135deg, #E65100, #4A1B00)",
+            "N64": "linear-gradient(135deg, #D32F2F, #4A0000)",
+            "SNES": "linear-gradient(135deg, #7C4DFF, #311B92)",
+            "GBA": "linear-gradient(135deg, #4A148C, #1A0033)",
+            "XBOX": "linear-gradient(135deg, #107C10, #063806)",
+            "XBOX360": "linear-gradient(135deg, #2E7D32, #0D3810)"
+        };
+        const grad = bgGradients[game.platform] || bgGradients["PS1"];
+
+        const platformIcons = {
+            "PS1": "🕹️", "PS2": "🎮", "PS3": "⚡", "PS4": "🩸", "PSP": "📱",
+            "GAMECUBE": "🎲", "WII": "🏸", "DREAMCAST": "🌀", "N64": "🕹️",
+            "SNES": "👾", "GBA": "🎮", "XBOX": "🟢", "XBOX360": "🟢"
+        };
+        const icon = platformIcons[game.platform] || "🎮";
+
+        const sizeStr = game.file_size_mb >= 1024 
+            ? (game.file_size_mb / 1024).toFixed(1) + " GB" 
+            : game.file_size_mb + " MB";
+
+        const isMulti = isMultiplayerGame(game);
+        const multiBadgeHtml = isMulti 
+            ? `<span class="multi-tag">👥 2-4P</span>`
+            : `<span class="card-type">${game.format}</span>`;
+
+        const posterStyle = game.cover_art 
+            ? `background-image: url('${game.cover_art}');`
+            : `background: ${grad};`;
+
+        const centerVisual = game.cover_art 
+            ? `<div style="height: 120px;"></div>`
+            : `<div style="font-size: 54px; filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));">${icon}</div>`;
+
+        const genreLabel = game.genre ? game.genre.split('/')[0].trim() : game.platform;
+
+        card.innerHTML = `
+            <div class="poster-art" style="${posterStyle}"></div>
+            <div class="card-inner">
+                <div class="card-header">
+                    <span class="card-badge platform-${game.platform.toLowerCase()}">${game.platform}</span>
+                    ${multiBadgeHtml}
+                </div>
+                <div class="disc-visual">
+                    ${centerVisual}
+                </div>
+                <div class="card-footer">
+                    <h3 class="card-title">${game.title}</h3>
+                    <span class="card-subtitle">${genreLabel} • ${sizeStr}</span>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener("click", () => {
+            initAudio();
+            const cardIndex = idx + 1;
+            if (currentIndex === cardIndex) {
+                launchSelectedGame();
+            } else {
+                updateSelection(cardIndex);
+            }
+        });
+
+        carouselTrack.appendChild(card);
+    });
+
+    // Re-index cards array
+    cards = Array.from(carouselTrack.querySelectorAll(".game-card"));
+    if (maintainFocus) {
+        if (currentIndex >= cards.length) currentIndex = Math.max(0, cards.length - 1);
+        updateSelection(currentIndex, false);
+    } else {
+        updateSelection(0, false);
+    }
+}
+
+function cycleCategory(delta) {
+    if (!categoryPillsContainer) return;
+    const pills = Array.from(categoryPillsContainer.querySelectorAll(".cat-pill"));
+    if (pills.length === 0) return;
+    let currIdx = pills.findIndex(p => p.classList.contains("active"));
+    if (currIdx < 0) currIdx = 0;
+    let nextIdx = currIdx + delta;
+    if (nextIdx < 0) nextIdx = pills.length - 1;
+    if (nextIdx >= pills.length) nextIdx = 0;
+    pills.forEach(p => p.classList.remove("active"));
+    pills[nextIdx].classList.add("active");
+    activeFilter = pills[nextIdx].dataset.filter || "all";
+    initAudio();
+    playTickSound();
+    applyFiltersAndRender(false);
+}
+
 // ==========================================================================
-// 6. Gamepad API Input Loop
+// 6. Gamepad API Input Loop (Dual Xbox Controller Support)
 // ==========================================================================
 let lastNavTime = 0;
 let buttonPressed = {};
 
 function pollGamepad() {
     const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
-    let gp = null;
-    for (let i = 0; i < gamepads.length; i++) {
-        if (gamepads[i]) {
-            gp = gamepads[i];
-            break;
-        }
-    }
+    let anyConnected = false;
 
-    if (gp) {
-        document.getElementById("controllerStatus").style.color = "#10B981";
+    // Check all connected gamepads (Player 1, Player 2, etc.)
+    for (let i = 0; i < gamepads.length; i++) {
+        const gp = gamepads[i];
+        if (!gp) continue;
+        anyConnected = true;
+
         const now = Date.now();
 
         // D-Pad or Left Stick X navigation
@@ -593,20 +738,39 @@ function pollGamepad() {
             }
         }
 
-        // Button 0: Cross / A -> Launch
-        if (gp.buttons[0] && gp.buttons[0].pressed) {
-            if (!buttonPressed[0]) {
-                initAudio();
-                launchSelectedGame();
-                buttonPressed[0] = true;
+        // LB (button 4) and RB (button 5) -> Cycle Categories
+        if (gp.buttons[4] && gp.buttons[4].pressed) {
+            if (!buttonPressed[`${i}_4`]) {
+                cycleCategory(-1);
+                buttonPressed[`${i}_4`] = true;
             }
         } else {
-            buttonPressed[0] = false;
+            buttonPressed[`${i}_4`] = false;
+        }
+
+        if (gp.buttons[5] && gp.buttons[5].pressed) {
+            if (!buttonPressed[`${i}_5`]) {
+                cycleCategory(1);
+                buttonPressed[`${i}_5`] = true;
+            }
+        } else {
+            buttonPressed[`${i}_5`] = false;
+        }
+
+        // Button 0: Cross / A -> Launch
+        if (gp.buttons[0] && gp.buttons[0].pressed) {
+            if (!buttonPressed[`${i}_0`]) {
+                initAudio();
+                launchSelectedGame();
+                buttonPressed[`${i}_0`] = true;
+            }
+        } else {
+            buttonPressed[`${i}_0`] = false;
         }
 
         // Button 1: Circle / B -> Exit Game, Cancel Ingestion, or Reset to Disc Slot
         if (gp.buttons[1] && gp.buttons[1].pressed) {
-            if (!buttonPressed[1]) {
+            if (!buttonPressed[`${i}_1`]) {
                 initAudio();
                 if (gameplayViewport && gameplayViewport.classList.contains("active")) {
                     fetch("/api/exit", { method: "POST" });
@@ -616,22 +780,27 @@ function pollGamepad() {
                 } else {
                     updateSelection(0);
                 }
-                buttonPressed[1] = true;
+                buttonPressed[`${i}_1`] = true;
             }
         } else {
-            buttonPressed[1] = false;
+            buttonPressed[`${i}_1`] = false;
         }
 
         // Button 3: Triangle / Y -> Refresh Library
         if (gp.buttons[3] && gp.buttons[3].pressed) {
-            if (!buttonPressed[3]) {
+            if (!buttonPressed[`${i}_3`]) {
                 initAudio();
                 fetchLibrary();
-                buttonPressed[3] = true;
+                buttonPressed[`${i}_3`] = true;
             }
         } else {
-            buttonPressed[3] = false;
+            buttonPressed[`${i}_3`] = false;
         }
+    }
+
+    const ctrlStatusElem = document.getElementById("controllerStatus");
+    if (ctrlStatusElem) {
+        ctrlStatusElem.style.color = anyConnected ? "#10B981" : "";
     }
 
     requestAnimationFrame(pollGamepad);
@@ -641,6 +810,15 @@ function pollGamepad() {
 // 7. Keyboard Navigation (Arrows, Enter, Escape)
 // ==========================================================================
 window.addEventListener("keydown", (e) => {
+    // Prevent carousel jumping while typing in search box
+    if (document.activeElement === searchInput) {
+        if (e.key === "Escape") {
+            searchInput.blur();
+            if (searchClearBtn) searchClearBtn.click();
+        }
+        return;
+    }
+
     initAudio();
     if (e.key === "ArrowLeft") {
         updateSelection(currentIndex - 1);
@@ -782,6 +960,41 @@ window.addEventListener("DOMContentLoaded", () => {
             }
         });
     });
+
+    // Category Filter Pills
+    if (categoryPillsContainer) {
+        const pills = categoryPillsContainer.querySelectorAll(".cat-pill");
+        pills.forEach(pill => {
+            pill.addEventListener("click", () => {
+                initAudio();
+                pills.forEach(p => p.classList.remove("active"));
+                pill.classList.add("active");
+                activeFilter = pill.dataset.filter || "all";
+                playTickSound();
+                applyFiltersAndRender(false);
+            });
+        });
+    }
+
+    // Instant Search Input
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            searchQuery = e.target.value;
+            if (searchClearBtn) {
+                searchClearBtn.style.display = searchQuery ? "block" : "none";
+            }
+            applyFiltersAndRender(false);
+        });
+    }
+
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener("click", () => {
+            if (searchInput) searchInput.value = "";
+            searchQuery = "";
+            searchClearBtn.style.display = "none";
+            applyFiltersAndRender(false);
+        });
+    }
 
     updateClock();
     setInterval(updateClock, 10000);

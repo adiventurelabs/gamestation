@@ -7,6 +7,7 @@ folders for display in the console dashboard.
 
 import os
 import re
+import json
 import glob
 import shutil
 import subprocess
@@ -16,6 +17,7 @@ from typing import List, Dict, Any, Optional, Set
 from .utils import expand_windows_path
 from .disc_identifier import DiscIdentifier
 from .game_database import GameDatabase, normalize_serial
+from .game_metadata import GameMetadataManager
 
 
 @dataclass
@@ -29,6 +31,13 @@ class LibraryGame:
     serial: Optional[str] = None
     cover_art: Optional[str] = None
     release_year: Optional[str] = None
+    hero_art: Optional[str] = None
+    genre: Optional[str] = None
+    players: Optional[str] = None
+    developer: Optional[str] = None
+    publisher: Optional[str] = None
+    rating: Optional[str] = None
+    description: Optional[str] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -59,6 +68,77 @@ class LibraryScanner:
         self.db = GameDatabase()
         self.identifier = DiscIdentifier(self.db)
         self.project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.metadata_mgr = GameMetadataManager(self.project_root, self.logger)
+        self.cache_file = os.path.join(self.project_root, "Library", ".library_cache.json")
+        self._cache: Dict[str, Dict[str, Any]] = self._load_cache()
+
+    def _load_cache(self) -> Dict[str, Dict[str, Any]]:
+        """Loads persistent metadata cache from disk."""
+        if os.path.isfile(self.cache_file):
+            try:
+                with open(self.cache_file, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                pass
+        return {}
+
+    def _save_cache(self):
+        """Persists metadata cache to disk for instant subsequent scans."""
+        try:
+            os.makedirs(os.path.dirname(self.cache_file), exist_ok=True)
+            with open(self.cache_file, "w", encoding="utf-8") as f:
+                json.dump(self._cache, f, indent=2)
+        except Exception as e:
+            if self.logger and hasattr(self.logger, "warning"):
+                self.logger.warning(f"Could not persist library cache: {e}")
+
+    def _create_library_game(
+        self,
+        raw_id: str,
+        title: str,
+        platform: str,
+        file_path: str,
+        size_mb: float,
+        format_type: str,
+        serial: Optional[str] = None
+    ) -> LibraryGame:
+        """Constructs an enriched LibraryGame with instant cache lookup."""
+        cache_key = None
+        try:
+            st = os.stat(file_path)
+            cache_key = f"{file_path}_{st.st_mtime}_{st.st_size}"
+            if cache_key in self._cache:
+                return LibraryGame(**self._cache[cache_key])
+        except Exception:
+            pass
+
+        meta = self.metadata_mgr.resolve_game_metadata(title, platform, file_path, serial)
+        clean_title = meta.get("title") or title
+        clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", clean_title.lower())[:25]
+
+        game = LibraryGame(
+            id=f"{platform.lower()}_{clean_id}",
+            title=clean_title,
+            platform=platform,
+            file_path=file_path,
+            file_size_mb=round(size_mb, 1),
+            format=format_type.upper(),
+            serial=serial,
+            cover_art=meta.get("cover_art"),
+            release_year=meta.get("release_year"),
+            hero_art=meta.get("hero_art"),
+            genre=meta.get("genre"),
+            players=meta.get("players"),
+            developer=meta.get("developer"),
+            publisher=meta.get("publisher"),
+            rating=meta.get("rating"),
+            description=meta.get("description")
+        )
+
+        if cache_key:
+            self._cache[cache_key] = game.to_dict()
+
+        return game
 
     def _get_unique_directories(self, dir_names: List[str]) -> List[str]:
         """Resolves existing directories deduplicated by filesystem inode."""
@@ -162,10 +242,13 @@ class LibraryScanner:
                 if not is_seen(g.file_path):
                     games.append(g)
 
+        self._save_cache()
         return games
 
     def _clean_game_title(self, raw_stem: str) -> str:
         """Cleans regional tags, brackets, parens, and standardizes title capitalization."""
+        if raw_stem.lower().endswith(".dec"):
+            raw_stem = raw_stem[:-4]
         cleaned = re.sub(r"\[[^\]]*\]|\([^\)]*\)", "", raw_stem).strip()
         cleaned = re.sub(r"_+", " ", cleaned)
         cleaned = re.sub(r"\s+", " ", cleaned).strip(" -")
@@ -206,13 +289,13 @@ class LibraryScanner:
                             title = params.get("TITLE") or self._clean_game_title(item)
                             serial = params.get("TITLE_ID")
                             size_mb = self._get_folder_size_mb(full_path)
-                            game = LibraryGame(
-                                id=f"ps3_{item.lower()}",
+                            game = self._create_library_game(
+                                raw_id=f"ps3_{item.lower()}",
                                 title=title,
                                 platform="PS3",
                                 file_path=full_path,
-                                file_size_mb=round(size_mb, 1),
-                                format="FOLDER",
+                                size_mb=size_mb,
+                                format_type="FOLDER",
                                 serial=serial
                             )
                             games.append(game)
@@ -233,13 +316,13 @@ class LibraryScanner:
                                     pass
                             if not title:
                                 title = self._clean_game_title(item)
-                            games.append(LibraryGame(
-                                id=f"ps4_{item.lower()}",
+                            games.append(self._create_library_game(
+                                raw_id=f"ps4_{item.lower()}",
                                 title=title,
                                 platform="PS4",
                                 file_path=eboot_path,
-                                file_size_mb=round(size_mb, 1),
-                                format="FOLDER",
+                                size_mb=size_mb,
+                                format_type="FOLDER",
                                 serial=serial
                             ))
                     elif platform == "XBOX":
@@ -247,26 +330,26 @@ class LibraryScanner:
                         if os.path.isfile(xbe_path):
                             size_mb = self._get_folder_size_mb(full_path)
                             title = self._clean_game_title(item)
-                            games.append(LibraryGame(
-                                id=f"xbox_{item.lower()}",
+                            games.append(self._create_library_game(
+                                raw_id=f"xbox_{item.lower()}",
                                 title=title,
                                 platform="XBOX",
                                 file_path=xbe_path,
-                                file_size_mb=round(size_mb, 1),
-                                format="FOLDER"
+                                size_mb=size_mb,
+                                format_type="FOLDER"
                             ))
                     elif platform == "XBOX360":
                         xex_path = os.path.join(full_path, "default.xex")
                         if os.path.isfile(xex_path):
                             size_mb = self._get_folder_size_mb(full_path)
                             title = self._clean_game_title(item)
-                            games.append(LibraryGame(
-                                id=f"xbox360_{item.lower()}",
+                            games.append(self._create_library_game(
+                                raw_id=f"xbox360_{item.lower()}",
                                 title=title,
                                 platform="XBOX360",
                                 file_path=xex_path,
-                                file_size_mb=round(size_mb, 1),
-                                format="FOLDER"
+                                size_mb=size_mb,
+                                format_type="FOLDER"
                             ))
                     continue
 
@@ -306,13 +389,13 @@ class LibraryScanner:
                         title = self._clean_game_title(raw_stem)
                     clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", title.lower())[:25]
 
-                    game = LibraryGame(
-                        id=f"{platform.lower()}_{clean_id}",
+                    game = self._create_library_game(
+                        raw_id=f"{platform.lower()}_{clean_id}",
                         title=title,
                         platform=platform,
                         file_path=full_path,
-                        file_size_mb=round(size_mb, 1),
-                        format=ext.lstrip(".").upper(),
+                        size_mb=size_mb,
+                        format_type=ext.lstrip("."),
                         serial=serial
                     )
                     games.append(game)
@@ -355,13 +438,13 @@ class LibraryScanner:
                                 except Exception:
                                     pass
                         clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", title.lower())[:25]
-                        games.append(LibraryGame(
-                            id=f"{plat.lower()}_{clean_id}",
+                        games.append(self._create_library_game(
+                            raw_id=f"{plat.lower()}_{clean_id}",
                             title=title,
                             platform=plat,
                             file_path=full_path,
-                            file_size_mb=round(size_mb, 1),
-                            format="FOLDER",
+                            size_mb=size_mb,
+                            format_type="FOLDER",
                             serial=serial
                         ))
                     continue
@@ -380,13 +463,13 @@ class LibraryScanner:
                     plat_hint = self._detect_archive_platform(full_path, item) or "XBOX360"
                     size_mb = os.path.getsize(full_path) / (1024 * 1024)
                     clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", clean_name.lower())[:25]
-                    games.append(LibraryGame(
-                        id=f"{plat_hint.lower()}_{clean_id}",
+                    games.append(self._create_library_game(
+                        raw_id=f"{plat_hint.lower()}_{clean_id}",
                         title=clean_name,
                         platform=plat_hint,
                         file_path=full_path,
-                        file_size_mb=round(size_mb, 1),
-                        format=ext.lstrip(".").upper()
+                        size_mb=size_mb,
+                        format_type=ext.lstrip(".")
                     ))
                     existing_titles.add(clean_name.lower())
                     continue
@@ -400,13 +483,13 @@ class LibraryScanner:
                     if not title:
                         title = self._clean_game_title(raw_stem)
                     clean_id = re.sub(r"[^a-zA-Z0-9_]", "_", title.lower())[:25]
-                    games.append(LibraryGame(
-                        id=f"{plat.lower()}_{clean_id}",
+                    games.append(self._create_library_game(
+                        raw_id=f"{plat.lower()}_{clean_id}",
                         title=title,
                         platform=plat,
                         file_path=full_path,
-                        file_size_mb=round(size_mb, 1),
-                        format=ext.lstrip(".").upper(),
+                        size_mb=size_mb,
+                        format_type=ext.lstrip("."),
                         serial=serial
                     ))
 
