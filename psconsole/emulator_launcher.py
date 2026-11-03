@@ -67,7 +67,8 @@ class EmulatorLauncher:
             "ps3": ["rpcs3.exe", "rpcs3"],
             "ps4": ["shadPS4.exe", "shadps4", "fpPS4.exe"],
             "xbox": ["xemu.exe", "xemu"],
-            "xbox360": ["xenia.exe", "xenia_canary.exe", "xenia"]
+            "xbox360": ["xenia.exe", "xenia_canary.exe", "xenia"],
+            "wiiu": ["Cemu.exe", "cemu.exe", "cemu", "Cemu"]
         }
         for b_name in binary_map.get(key, []):
             found = self._which(b_name)
@@ -152,6 +153,8 @@ class EmulatorLauncher:
             cmd.extend(["-f", file_path])
         elif key in ("gamecube", "wii"):
             cmd.extend(["-b", "-e", file_path])
+        elif key == "wiiu":
+            cmd.extend(["-f", "-g", file_path])
         elif key == "dreamcast":
             cmd.append(file_path)
         elif key == "n64":

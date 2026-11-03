@@ -52,4 +52,5 @@ emulators/
 *.pbp
 *.xex
 *.xbe
+*.wua
 .library_cache.json

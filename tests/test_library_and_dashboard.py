@@ -98,7 +98,7 @@ class TestLibraryAndDashboard(unittest.TestCase):
         self.assertEqual(titles["FIFA 18 - Legacy Edition"].format, "ISO")
 
         # Loose root folder game should also be detected
-        self.assertTrue(any(g.platform == "PS3" and "Demons Souls" in g.title for g in games))
+        self.assertTrue(any(g.platform == "PS3" and ("Demons Souls" in g.title or "Demon's Souls" in g.title) for g in games))
 
     def test_dashboard_server_rest_api(self):
         # Create mock service

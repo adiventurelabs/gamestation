@@ -166,6 +166,20 @@
         "{target}"
       ]
     },
+    "wiiu": {
+      "name": "Cemu",
+      "executable_candidates": [
+        "%LOCALAPPDATA%\\Programs\\Cemu\\Cemu.exe",
+        "%LOCALAPPDATA%\\Cemu\\Cemu.exe",
+        "%PROGRAMFILES%\\Cemu\\Cemu.exe",
+        "emulators\\Cemu\\Cemu.exe"
+      ],
+      "cli_args_file": [
+        "-f",
+        "-g",
+        "{target}"
+      ]
+    },
     "dreamcast": {
       "name": "Redream",
       "executable_candidates": [
@@ -240,6 +254,7 @@
     "psp_dir": "Library\\psp",
     "gamecube_dir": "Library\\gamecube",
     "wii_dir": "Library\\wii",
+    "wiiu_dir": "Library\\wiiu",
     "dreamcast_dir": "Library\\dreamcast",
     "n64_dir": "Library\\n64",
     "snes_dir": "Library\\snes",

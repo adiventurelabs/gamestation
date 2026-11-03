@@ -15,6 +15,50 @@ from typing import Optional, Dict, Any
 
 # Curated high-fidelity metadata for library games
 KNOWN_METADATA: Dict[str, Dict[str, Any]] = {
+    "naruto shippuden - ultimate ninja storm 3 full burst": {
+        "title": "Naruto Shippuden: Ultimate Ninja Storm 3 Full Burst",
+        "cover_art": "/covers/naruto_storm_3.jpg",
+        "genre": "Anime / Fighting / 3D Versus",
+        "players": "1-2 Players (Local Versus & Tournament)",
+        "developer": "CyberConnect2",
+        "publisher": "Bandai Namco Games",
+        "release_year": "2013",
+        "rating": "ESRB: Teen",
+        "description": "The Fourth Great Ninja War reaches its epic climax. Relive iconic anime battles against the Akatsuki, Nine-Tails, and the legendary Madara Uchiha in intense living room ninja combat."
+    },
+    "naruto shippuden: ultimate ninja storm 3 full burst": {
+        "title": "Naruto Shippuden: Ultimate Ninja Storm 3 Full Burst",
+        "cover_art": "/covers/naruto_storm_3.jpg",
+        "genre": "Anime / Fighting / 3D Versus",
+        "players": "1-2 Players (Local Versus & Tournament)",
+        "developer": "CyberConnect2",
+        "publisher": "Bandai Namco Games",
+        "release_year": "2013",
+        "rating": "ESRB: Teen",
+        "description": "The Fourth Great Ninja War reaches its epic climax. Relive iconic anime battles against the Akatsuki, Nine-Tails, and the legendary Madara Uchiha in intense living room ninja combat."
+    },
+    "super smash bros. for wii u": {
+        "title": "Super Smash Bros. for Wii U",
+        "cover_art": "/covers/smash_wiiu.jpg",
+        "genre": "Platform Fighter / Party",
+        "players": "1-8 Players (8-Player Local Smash)",
+        "developer": "Bandai Namco Games / Sora Ltd.",
+        "publisher": "Nintendo",
+        "release_year": "2014",
+        "rating": "ESRB: Everyone 10+",
+        "description": "Battle across iconic Nintendo worlds with Mario, Link, Pikachu, Sonic, Mega Man, and Pac-Man. Supports legendary 8-player local living room mayhem on Wii U."
+    },
+    "super smash bros for wii u": {
+        "title": "Super Smash Bros. for Wii U",
+        "cover_art": "/covers/smash_wiiu.jpg",
+        "genre": "Platform Fighter / Party",
+        "players": "1-8 Players (8-Player Local Smash)",
+        "developer": "Bandai Namco Games / Sora Ltd.",
+        "publisher": "Nintendo",
+        "release_year": "2014",
+        "rating": "ESRB: Everyone 10+",
+        "description": "Battle across iconic Nintendo worlds with Mario, Link, Pikachu, Sonic, Mega Man, and Pac-Man. Supports legendary 8-player local living room mayhem on Wii U."
+    },
     "far cry 4": {
         "title": "Far Cry 4",
         "cover_art": "/covers/far_cry_4.jpg",
@@ -335,14 +379,16 @@ class GameMetadataManager:
         Enriches a game with cover art, genre, player counts, developer, and synopsis.
         Checks curated database, local folder art, and cached box arts.
         """
-        clean_key = title.strip().lower()
+        clean_key = re.sub(r"[™®©]", "", title).strip().lower()
 
         # 1. Check curated dictionary
         meta = KNOWN_METADATA.get(clean_key)
         if not meta:
-            # Try fuzzy key match
+            # Try normalized key match (ignoring punctuation, spaces, and trademark symbols)
+            norm_key = re.sub(r"[^a-z0-9]", "", clean_key)
             for k, v in KNOWN_METADATA.items():
-                if k in clean_key or clean_key in k:
+                norm_k = re.sub(r"[^a-z0-9]", "", k)
+                if norm_k == norm_key or (len(norm_k) > 6 and (norm_k in norm_key or norm_key in norm_k)):
                     meta = v
                     break
 

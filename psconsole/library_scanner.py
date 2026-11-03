@@ -56,6 +56,7 @@ class LibraryScanner:
         "PSP": "psp",
         "GAMECUBE": "gamecube",
         "WII": "wii",
+        "WIIU": "wiiu",
         "DREAMCAST": "dreamcast",
         "N64": "n64",
         "SNES": "snes",
@@ -377,7 +378,11 @@ class LibraryScanner:
                         if os.path.isfile(sfo_path):
                             with open(sfo_path, "rb") as f:
                                 params = self.identifier.parse_param_sfo(f.read())
-                            title = params.get("TITLE") or self._clean_game_title(item)
+                            raw_title = params.get("TITLE")
+                            if raw_title:
+                                title = re.sub(r"[™®©]", "", raw_title).strip()
+                            else:
+                                title = self._clean_game_title(item)
                             serial = params.get("TITLE_ID")
                             size_mb = self._get_folder_size_mb(full_path)
                             game = self._create_library_game(
@@ -455,6 +460,7 @@ class LibraryScanner:
                     "PSP": [".iso", ".cso", ".chd", ".pbp"],
                     "GAMECUBE": [".rvz", ".iso", ".gcm", ".ciso"],
                     "WII": [".rvz", ".wbfs", ".iso", ".ciso"],
+                    "WIIU": [".wua", ".rpx", ".wud", ".wux", ".iso"],
                     "DREAMCAST": [".chd", ".cdi", ".gdi"],
                     "N64": [".z64", ".n64", ".v64"],
                     "SNES": [".sfc", ".smc"],
@@ -550,7 +556,9 @@ class LibraryScanner:
                     base_stem = re.sub(r"\(Disc\s*\d+.*?\)", "", clean_name, flags=re.IGNORECASE).strip()
                     base_stem = re.sub(r"\bDisc\s*\d+\b", "", base_stem, flags=re.IGNORECASE).strip(" -")
                     # If game is already indexed from extracted files, skip the archive
-                    if any(base_stem.lower() in t for t in existing_titles) or clean_name.lower() in existing_titles:
+                    norm_base = re.sub(r"[^a-z0-9]", "", base_stem.lower())
+                    norm_existing = {re.sub(r"[^a-z0-9]", "", t.lower()) for t in existing_titles}
+                    if norm_base in norm_existing or any(norm_base in e or e in norm_base for e in norm_existing if len(e) > 6):
                         continue
 
                     plat_hint = self._detect_archive_platform(full_path, item)
@@ -623,6 +631,8 @@ class LibraryScanner:
     def _detect_file_platform(self, file_path: str, filename: str) -> Optional[str]:
         """Infers platform from filename, extension, companion metadata, or disc sectors."""
         ext = os.path.splitext(filename)[1].lower()
+        if ext in (".wua", ".rpx", ".wud", ".wux"):
+            return "WIIU"
 
         ext_map = {
             ".z64": "N64", ".n64": "N64", ".v64": "N64",
