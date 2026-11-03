@@ -5,6 +5,7 @@
     "ps1": {
       "name": "DuckStation",
       "executable_candidates": [
+        "emulators/linux/duckstation.AppImage",
         "%LOCALAPPDATA%\\Programs\\DuckStation\\duckstation-qt.exe",
         "%LOCALAPPDATA%\\DuckStation\\duckstation-qt-x64-ReleaseLTCG.exe",
         "%LOCALAPPDATA%\\DuckStation\\duckstation-qt.exe",
@@ -38,6 +39,7 @@
     "ps2": {
       "name": "PCSX2",
       "executable_candidates": [
+        "emulators/linux/pcsx2.AppImage",
         "%LOCALAPPDATA%\\Programs\\PCSX2\\pcsx2-qt.exe",
         "%LOCALAPPDATA%\\PCSX2\\pcsx2-qt.exe",
         "%PROGRAMFILES%\\PCSX2\\pcsx2-qt.exe",
@@ -70,6 +72,7 @@
     "ps3": {
       "name": "RPCS3",
       "executable_candidates": [
+        "emulators/linux/rpcs3.AppImage",
         "%LOCALAPPDATA%\\Programs\\RPCS3\\rpcs3.exe",
         "%LOCALAPPDATA%\\RPCS3\\rpcs3.exe",
         "%PROGRAMFILES%\\RPCS3\\rpcs3.exe",
@@ -114,6 +117,8 @@
     "xbox360": {
       "name": "Xenia",
       "executable_candidates": [
+        "emulators/linux/xenia_canary.AppImage",
+        "emulators/linux/xenia.AppImage",
         "%LOCALAPPDATA%\\Programs\\xenia\\xenia_canary.exe",
         "%LOCALAPPDATA%\\Programs\\xenia\\xenia.exe",
         "%LOCALAPPDATA%\\xenia\\xenia_canary.exe",
@@ -169,6 +174,7 @@
     "wiiu": {
       "name": "Cemu",
       "executable_candidates": [
+        "emulators/linux/cemu.AppImage",
         "%LOCALAPPDATA%\\Programs\\Cemu\\Cemu.exe",
         "%LOCALAPPDATA%\\Cemu\\Cemu.exe",
         "%PROGRAMFILES%\\Cemu\\Cemu.exe",

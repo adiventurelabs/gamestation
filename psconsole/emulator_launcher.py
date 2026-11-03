@@ -55,6 +55,16 @@ class EmulatorLauncher:
         emu_cfg = self.config.get("emulators", {}).get(key, {})
         candidates = emu_cfg.get("executable_candidates", [])
 
+        # On non-Windows OS, prefer native Linux/macOS binaries first if present in candidates
+        if not is_windows():
+            for candidate in candidates:
+                resolved = expand_windows_path(candidate)
+                if not os.path.isabs(resolved):
+                    resolved = os.path.join(self.project_root, resolved)
+                if not resolved.lower().endswith(".exe") and os.path.isfile(resolved):
+                    return resolved
+
+        # Standard candidate check
         for candidate in candidates:
             resolved = expand_windows_path(candidate)
             if not os.path.isabs(resolved):
@@ -83,8 +93,6 @@ class EmulatorLauncher:
             os.path.expanduser("~/.local/bin"),
             os.path.expanduser("~/Applications"),
             os.path.expanduser("~/bin"),
-            os.path.join(self.project_root, "emulators"),
-            os.path.join(self.project_root, "emulators", "linux"),
             "/usr/local/bin",
             "/usr/bin"
         ]
