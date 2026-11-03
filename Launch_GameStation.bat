@@ -65,11 +65,9 @@ if "%PY_CMD%"=="" (
 
 echo [*] Python detected: %PY_CMD%
 
-:: 3. Fast Dependency Check (Only run pip if packages are missing)
-echo [*] Checking required dependencies...
-%PY_CMD% -c "import urllib3" >nul 2>&1
-if errorlevel 1 (
-    echo [*] Installing required packages from requirements.txt...
+:: 3. Fast Dependency Check (Only run pip if requirements.txt exists)
+if exist requirements.txt (
+    echo [*] Checking required dependencies...
     %PY_CMD% -m pip install -r requirements.txt --quiet --disable-pip-version-check
 )
 

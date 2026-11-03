@@ -46,7 +46,7 @@ class PSConsoleService:
             filename=log_cfg.get("filename", "psconsole.log"),
             max_bytes=log_cfg.get("max_bytes", 5 * 1024 * 1024),
             backup_count=log_cfg.get("backup_count", 3),
-            to_console=False
+            to_console=True
         )
 
         self.state = ServiceState.IDLE

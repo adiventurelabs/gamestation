@@ -197,37 +197,54 @@ class EmulatorLauncher:
         return self._spawn_process(cmd, emu_name, target_desc=disc_info.title)
 
     def launch_digital_game(self, platform: str, file_path: str, title: str = "Digital Game") -> LaunchResult:
-        """Launches a digital game from the library, automatically extracting archives if needed."""
+        """Launches a digital game from the library, automatically resolving absolute paths and archives."""
+        # Resolve to absolute path
+        abs_target = file_path
+        if not os.path.isabs(abs_target):
+            abs_target = os.path.join(self.project_root, abs_target)
+        abs_target = os.path.normpath(abs_target)
+
         # Auto-extract if it's an archive (.7z or .zip)
-        if file_path.lower().endswith((".7z", ".zip")) and os.path.isfile(file_path):
+        if abs_target.lower().endswith((".7z", ".zip")) and os.path.isfile(abs_target):
             extractor_tool = shutil.which("7zz") or shutil.which("7z")
             if extractor_tool:
                 target_dir = os.path.join(self.project_root, "Library", platform.lower())
                 os.makedirs(target_dir, exist_ok=True)
                 if self.logger:
-                    self.logger.info(f"Auto-extracting archive {file_path} into {target_dir} before launch...")
+                    self.logger.info(f"Auto-extracting archive {abs_target} into {target_dir} before launch...")
                 try:
                     subprocess.run(
-                        [extractor_tool, "x", file_path, f"-o{target_dir}", "-y"],
+                        [extractor_tool, "x", abs_target, f"-o{target_dir}", "-y"],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
                         check=True
                     )
-                    # Point file_path to extracted game
+                    # Point abs_target to extracted game
                     for item in os.listdir(target_dir):
-                        if item.lower().endswith((".iso", ".xex", ".pkg", ".cue", ".chd", ".rvz")):
-                            file_path = os.path.join(target_dir, item)
+                        if item.lower().endswith((".iso", ".xex", ".pkg", ".cue", ".chd", ".rvz", ".wua", ".dec.iso")):
+                            abs_target = os.path.join(target_dir, item)
                             break
                 except Exception as e:
                     if self.logger:
                         self.logger.warning(f"Archive auto-extract failed: {e}")
 
-        if not os.path.exists(file_path) and not self.config.get("allow_simulation", False):
+        # Resolve PS3 folder game to EBOOT.BIN if needed
+        if platform.upper() == "PS3" and os.path.isdir(abs_target):
+            eboot_candidate = os.path.join(abs_target, "PS3_GAME", "USRDIR", "EBOOT.BIN")
+            if os.path.isfile(eboot_candidate):
+                abs_target = eboot_candidate
+            else:
+                for root, _, files in os.walk(abs_target):
+                    if "EBOOT.BIN" in files:
+                        abs_target = os.path.join(root, "EBOOT.BIN")
+                        break
+
+        if not os.path.exists(abs_target) and not self.config.get("allow_simulation", False):
             return LaunchResult(
                 status=LaunchStatus.FILE_NOT_FOUND,
                 emulator_name=platform,
                 command=[],
-                error_message=f"Game file not found at: {file_path}"
+                error_message=f"Game file not found at: {abs_target}"
             )
 
         exe_path = self.find_emulator_executable(platform)
@@ -240,10 +257,10 @@ class EmulatorLauncher:
                 status=LaunchStatus.EMULATOR_NOT_FOUND,
                 emulator_name=emu_name,
                 command=[],
-                error_message=f"{emu_name} executable not found."
+                error_message=f"{emu_name} executable not found on system. Please install {emu_name} or run Install_And_Play_Helios.bat"
             )
 
-        cmd = self.build_command_file(platform, file_path, exe_path)
+        cmd = self.build_command_file(platform, abs_target, exe_path)
         return self._spawn_process(cmd, emu_name, target_desc=title)
 
     def _start_simulated_session(self, platform: str, emu_name: str, target_desc: str) -> LaunchResult:
@@ -280,9 +297,11 @@ class EmulatorLauncher:
 
         try:
             creation_flags = 0x00000008 if is_windows() else 0  # DETACHED_PROCESS
+            emu_dir = os.path.dirname(cmd[0]) if (cmd and os.path.isabs(cmd[0])) else self.project_root
 
             proc = subprocess.Popen(
                 cmd,
+                cwd=emu_dir,
                 creationflags=creation_flags,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL

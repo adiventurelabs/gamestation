@@ -216,59 +216,67 @@ class DiscDetector:
 
     def _win32_message_loop(self):
         """Runs a message-only hidden Win32 window to capture WM_DEVICECHANGE."""
-        WNDPROCTYPE = ctypes.WINFUNCTYPE(ctypes.c_long, wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
+        try:
+            WNDPROCTYPE = ctypes.WINFUNCTYPE(ctypes.c_long, wintypes.HWND, wintypes.UINT, wintypes.WPARAM, wintypes.LPARAM)
 
-        def wndproc(hwnd, msg, wparam, lparam):
-            if msg == WM_DEVICECHANGE:
-                self._handle_device_change(wparam, lparam)
-                return 1
-            return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
+            def wndproc(hwnd, msg, wparam, lparam):
+                if msg == WM_DEVICECHANGE:
+                    self._handle_device_change(wparam, lparam)
+                    return 1
+                return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
 
-        self._wndproc = WNDPROCTYPE(wndproc)
+            self._wndproc = WNDPROCTYPE(wndproc)
 
-        class WNDCLASS(ctypes.Structure):
-            _fields_ = [
-                ("style", wintypes.UINT),
-                ("lpfnWndProc", WNDPROCTYPE),
-                ("cbClsExtra", ctypes.c_int),
-                ("cbWndExtra", ctypes.c_int),
-                ("hInstance", wintypes.HINSTANCE),
-                ("hIcon", wintypes.HICON),
-                ("hCursor", wintypes.HCURSOR),
-                ("hbrBackground", wintypes.HBRUSH),
-                ("lpszMenuName", wintypes.LPCWSTR),
-                ("lpszClassName", wintypes.LPCWSTR),
-            ]
+            HCURSOR = getattr(wintypes, "HCURSOR", getattr(wintypes, "HANDLE", ctypes.c_void_p))
+            HBRUSH = getattr(wintypes, "HBRUSH", getattr(wintypes, "HANDLE", ctypes.c_void_p))
+            HICON = getattr(wintypes, "HICON", getattr(wintypes, "HANDLE", ctypes.c_void_p))
 
-        cls = WNDCLASS()
-        cls_name = "PSConsoleDiscWatcher"
-        cls.lpszClassName = cls_name
-        cls.lpfnWndProc = self._wndproc
-        cls.hInstance = kernel32.GetModuleHandleW(None)
+            class WNDCLASS(ctypes.Structure):
+                _fields_ = [
+                    ("style", wintypes.UINT),
+                    ("lpfnWndProc", WNDPROCTYPE),
+                    ("cbClsExtra", ctypes.c_int),
+                    ("cbWndExtra", ctypes.c_int),
+                    ("hInstance", wintypes.HINSTANCE),
+                    ("hIcon", HICON),
+                    ("hCursor", HCURSOR),
+                    ("hbrBackground", HBRUSH),
+                    ("lpszMenuName", wintypes.LPCWSTR),
+                    ("lpszClassName", wintypes.LPCWSTR),
+                ]
 
-        user32.RegisterClassW(ctypes.byref(cls))
+            cls = WNDCLASS()
+            cls_name = "PSConsoleDiscWatcher"
+            cls.lpszClassName = cls_name
+            cls.lpfnWndProc = self._wndproc
+            cls.hInstance = kernel32.GetModuleHandleW(None)
 
-        HWND_MESSAGE = -3
-        self._hwnd = user32.CreateWindowExW(
-            0, cls_name, cls_name, 0, 0, 0, 0, 0,
-            HWND_MESSAGE, 0, cls.hInstance, 0
-        )
+            user32.RegisterClassW(ctypes.byref(cls))
 
-        if not self._hwnd:
+            HWND_MESSAGE = -3
+            self._hwnd = user32.CreateWindowExW(
+                0, cls_name, cls_name, 0, 0, 0, 0, 0,
+                HWND_MESSAGE, 0, cls.hInstance, 0
+            )
+
+            if not self._hwnd:
+                if self.logger:
+                    self.logger.warning("Failed to create hidden Win32 message window for disc detection. Drive polling remains active.")
+                return
+
             if self.logger:
-                self.logger.error("Failed to create hidden Win32 message window for disc detection.")
-            return
+                self.logger.info("Win32 device change notification window created successfully.")
 
-        if self.logger:
-            self.logger.info("Win32 device change notification window created successfully.")
-
-        msg = wintypes.MSG()
-        while self._running:
-            b_ret = user32.GetMessageW(ctypes.byref(msg), self._hwnd, 0, 0)
-            if b_ret <= 0:
-                break
-            user32.TranslateMessage(ctypes.byref(msg))
-            user32.DispatchMessageW(ctypes.byref(msg))
+            msg = wintypes.MSG()
+            while self._running:
+                b_ret = user32.GetMessageW(ctypes.byref(msg), self._hwnd, 0, 0)
+                if b_ret <= 0:
+                    break
+                user32.TranslateMessage(ctypes.byref(msg))
+                user32.DispatchMessageW(ctypes.byref(msg))
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Win32 disc notification loop encountered error: {e}. Media polling remains active.")
 
     def _handle_device_change(self, wparam: int, lparam: int):
         """Processes WM_DEVICECHANGE parameters for optical media events."""
