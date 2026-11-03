@@ -50,30 +50,86 @@ class EmulatorLauncher:
         self.saved_launcher_hwnd: int = 0
 
     def find_emulator_executable(self, platform_name: str) -> Optional[str]:
-        """Resolves existing emulator executable path for PS1, PS2, PS3, or PS4."""
+        """Resolves existing emulator executable path for PS1, PS2, PS3, PS4, Xbox 360, Wii U, etc."""
         key = platform_name.lower()
         emu_cfg = self.config.get("emulators", {}).get(key, {})
         candidates = emu_cfg.get("executable_candidates", [])
 
         for candidate in candidates:
             resolved = expand_windows_path(candidate)
+            if not os.path.isabs(resolved):
+                resolved = os.path.join(self.project_root, resolved)
             if os.path.isfile(resolved):
                 return resolved
 
-        # Check PATH if candidate wasn't found directly
+        # Extended candidate names for Windows and Linux
         binary_map = {
-            "ps1": ["duckstation-qt.exe", "duckstation-qt"],
-            "ps2": ["pcsx2-qt.exe", "pcsx2.exe", "pcsx2-qt"],
-            "ps3": ["rpcs3.exe", "rpcs3"],
+            "ps1": ["duckstation-qt.exe", "duckstation-qt", "duckstation", "DuckStation", "DuckStation-x64.AppImage", "duckstation.AppImage"],
+            "ps2": ["pcsx2-qt.exe", "pcsx2.exe", "pcsx2-qt", "pcsx2", "PCSX2", "pcsx2.AppImage", "PCSX2.AppImage"],
+            "ps3": ["rpcs3.exe", "rpcs3", "RPCS3", "rpcs3.AppImage", "RPCS3.AppImage"],
             "ps4": ["shadPS4.exe", "shadps4", "fpPS4.exe"],
-            "xbox": ["xemu.exe", "xemu"],
-            "xbox360": ["xenia.exe", "xenia_canary.exe", "xenia"],
-            "wiiu": ["Cemu.exe", "cemu.exe", "cemu", "Cemu"]
+            "xbox": ["xemu.exe", "xemu", "xemu.AppImage"],
+            "xbox360": ["xenia.exe", "xenia_canary.exe", "xenia", "xenia_canary", "xenia.AppImage", "xenia_canary.AppImage", "Xenia_Canary.AppImage"],
+            "wiiu": ["Cemu.exe", "cemu.exe", "cemu", "Cemu", "Cemu.AppImage", "cemu.AppImage"],
+            "psp": ["PPSSPPWindows64.exe", "PPSSPP", "ppsspp"],
+            "gamecube": ["Dolphin.exe", "dolphin-emu"],
+            "wii": ["Dolphin.exe", "dolphin-emu"],
+            "dreamcast": ["redream.exe", "redream", "flycast"],
+            "n64": ["simple64-gui.exe", "simple64", "mupen64plus"],
+            "snes": ["snes9x-x64.exe", "snes9x"]
         }
-        for b_name in binary_map.get(key, []):
-            found = self._which(b_name)
-            if found:
-                return found
+
+        search_dirs = [
+            os.path.expanduser("~/.local/bin"),
+            os.path.expanduser("~/Applications"),
+            os.path.expanduser("~/bin"),
+            os.path.join(self.project_root, "emulators"),
+            os.path.join(self.project_root, "emulators", "linux"),
+            "/usr/local/bin",
+            "/usr/bin"
+        ]
+        for p in os.environ.get("PATH", "").split(os.pathsep):
+            if p and p not in search_dirs:
+                search_dirs.append(p)
+
+        names = binary_map.get(key, [key])
+        for sdir in search_dirs:
+            if not os.path.isdir(sdir):
+                continue
+            for name in names:
+                target = os.path.join(sdir, name)
+                if os.path.isfile(target) and (os.access(target, os.X_OK) or is_windows()):
+                    return target
+            # Also check for wildcards like rpcs3*.AppImage, cemu*.AppImage, etc.
+            try:
+                for file_name in os.listdir(sdir):
+                    f_lower = file_name.lower()
+                    if f_lower.endswith(".appimage") and key in f_lower:
+                        full_p = os.path.join(sdir, file_name)
+                        if os.path.isfile(full_p) and os.access(full_p, os.X_OK):
+                            return full_p
+            except Exception:
+                pass
+
+        # Flatpak fallback on Linux
+        if not is_windows():
+            flatpak_map = {
+                "ps1": "org.duckstation.DuckStation",
+                "ps2": "net.pcsx2.PCSX2",
+                "ps3": "net.rpcs3.RPCS3",
+                "wiiu": "info.cemu.Cemu",
+                "gamecube": "org.DolphinEmu.dolphin-emu",
+                "wii": "org.DolphinEmu.dolphin-emu",
+                "psp": "org.ppsspp.PPSSPP"
+            }
+            flatpak_app = flatpak_map.get(key)
+            if flatpak_app and self._which("flatpak"):
+                try:
+                    chk = subprocess.run(["flatpak", "info", flatpak_app], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    if chk.returncode == 0:
+                        return f"flatpak:{flatpak_app}"
+                except Exception:
+                    pass
 
         return None
 
@@ -135,7 +191,11 @@ class EmulatorLauncher:
         Builds command line arguments for digital game launch from file/folder.
         """
         key = platform.lower()
-        cmd = [executable_path]
+        if executable_path.startswith("flatpak:"):
+            flatpak_app = executable_path.split(":", 1)[1]
+            cmd = ["flatpak", "run", flatpak_app]
+        else:
+            cmd = [executable_path]
 
         if key == "ps1":
             cmd.extend(["-batch", "-fullscreen", "--", file_path])
@@ -297,11 +357,15 @@ class EmulatorLauncher:
 
         try:
             creation_flags = 0x00000008 if is_windows() else 0  # DETACHED_PROCESS
-            emu_dir = os.path.dirname(cmd[0]) if (cmd and os.path.isabs(cmd[0])) else self.project_root
+            emu_dir = self.project_root if (cmd and cmd[0] == "flatpak") else (os.path.dirname(cmd[0]) if (cmd and os.path.isabs(cmd[0])) else self.project_root)
+
+            env = os.environ.copy()
+            env["APPIMAGE_EXTRACT_AND_RUN"] = "1"
 
             proc = subprocess.Popen(
                 cmd,
                 cwd=emu_dir,
+                env=env,
                 creationflags=creation_flags,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL
