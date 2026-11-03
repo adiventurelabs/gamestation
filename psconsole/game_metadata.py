@@ -15,6 +15,61 @@ from typing import Optional, Dict, Any
 
 # Curated high-fidelity metadata for library games
 KNOWN_METADATA: Dict[str, Dict[str, Any]] = {
+    "dragon ball z - budokai hd collection": {
+        "title": "Dragon Ball Z: Budokai HD Collection",
+        "cover_art": "/covers/dbz_budokai_hd.jpg",
+        "genre": "Anime / Fighting / 3D Versus",
+        "players": "1-2 Players (Local Versus & World Tournament)",
+        "developer": "Dimps",
+        "publisher": "Bandai Namco Games",
+        "release_year": "2012",
+        "rating": "ESRB: Teen",
+        "description": "Relive the golden era of Dragon Ball Z fighting games. Includes both Dragon Ball Z Budokai and Dragon Ball Z Budokai 3 completely remastered in high definition with 60 FPS combat."
+    },
+    "dragon ball z: budokai hd collection": {
+        "title": "Dragon Ball Z: Budokai HD Collection",
+        "cover_art": "/covers/dbz_budokai_hd.jpg",
+        "genre": "Anime / Fighting / 3D Versus",
+        "players": "1-2 Players (Local Versus & World Tournament)",
+        "developer": "Dimps",
+        "publisher": "Bandai Namco Games",
+        "release_year": "2012",
+        "rating": "ESRB: Teen",
+        "description": "Relive the golden era of Dragon Ball Z fighting games. Includes both Dragon Ball Z Budokai and Dragon Ball Z Budokai 3 completely remastered in high definition with 60 FPS combat."
+    },
+    "call of duty - advanced warfare": {
+        "title": "Call of Duty: Advanced Warfare",
+        "cover_art": "/covers/cod_advanced_warfare.jpg",
+        "genre": "First-Person Shooter / Sci-Fi Military",
+        "players": "1-2 Players (Split-Screen Co-op & Exo Survival)",
+        "developer": "Sledgehammer Games / High Moon Studios",
+        "publisher": "Activision",
+        "release_year": "2014",
+        "rating": "ESRB: Mature (17+)",
+        "description": "Enter a future dominated by Private Military Corporations. Power up with advanced exoskeletons for boosted jumps, cloaking, and high-speed split-screen living room combat starring Kevin Spacey."
+    },
+    "call of duty: advanced warfare": {
+        "title": "Call of Duty: Advanced Warfare",
+        "cover_art": "/covers/cod_advanced_warfare.jpg",
+        "genre": "First-Person Shooter / Sci-Fi Military",
+        "players": "1-2 Players (Split-Screen Co-op & Exo Survival)",
+        "developer": "Sledgehammer Games / High Moon Studios",
+        "publisher": "Activision",
+        "release_year": "2014",
+        "rating": "ESRB: Mature (17+)",
+        "description": "Enter a future dominated by Private Military Corporations. Power up with advanced exoskeletons for boosted jumps, cloaking, and high-speed split-screen living room combat starring Kevin Spacey."
+    },
+    "wwe 2k17": {
+        "title": "WWE 2K17",
+        "cover_art": "/covers/wwe_2k17.jpg",
+        "genre": "Sports / Pro Wrestling",
+        "players": "1-4 Players (Local Versus, Tag Team & Royal Rumble)",
+        "developer": "Yuke's / Visual Concepts",
+        "publisher": "2K Sports",
+        "release_year": "2016",
+        "rating": "ESRB: Teen",
+        "description": "Welcome to Suplex City, courtesy of cover Superstar Brock Lesnar! Features thousands of new moves, backstage brawling, and massive 1-4 player living room wrestling showdowns."
+    },
     "naruto shippuden - ultimate ninja storm 3 full burst": {
         "title": "Naruto Shippuden: Ultimate Ninja Storm 3 Full Burst",
         "cover_art": "/covers/naruto_storm_3.jpg",
