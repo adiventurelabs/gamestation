@@ -92,6 +92,7 @@ class TestEmulatorLauncher(unittest.TestCase):
         cmd = self.launcher.build_command_disc(disc_info, "C:\\RPCS3\\rpcs3.exe")
         self.assertEqual(cmd, [
             "C:\\RPCS3\\rpcs3.exe",
+            "--no-gui",
             "--fullscreen",
             "F:\\"
         ])

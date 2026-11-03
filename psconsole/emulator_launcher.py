@@ -290,7 +290,7 @@ class EmulatorLauncher:
         elif disc_info.disc_type == DiscType.PS2:
             cmd.extend(["-batch", "-fullscreen", "-disc", drive_root])
         elif disc_info.disc_type == DiscType.PS3:
-            cmd.extend(["--fullscreen", drive_root])
+            cmd.extend(["--no-gui", "--fullscreen", drive_root])
         elif disc_info.disc_type == DiscType.PS4:
             cmd.extend(["-g", drive_root])
         elif disc_info.disc_type == DiscType.XBOX:
@@ -316,7 +316,7 @@ class EmulatorLauncher:
         elif key == "ps2":
             cmd.extend(["-batch", "-fullscreen", file_path])
         elif key == "ps3":
-            cmd.extend(["--fullscreen", file_path])
+            cmd.extend(["--no-gui", "--fullscreen", file_path])
         elif key == "ps4":
             cmd.extend(["-g", file_path])
         elif key == "xbox":

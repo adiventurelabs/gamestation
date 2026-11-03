@@ -54,3 +54,4 @@ emulators/
 *.xbe
 *.wua
 .library_cache.json
+Screenshot*.png

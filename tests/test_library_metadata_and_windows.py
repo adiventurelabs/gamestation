@@ -26,7 +26,7 @@ class TestLibraryMetadataAndWindows(unittest.TestCase):
                 "ps3": {
                     "name": "RPCS3",
                     "executable_candidates": ["%LOCALAPPDATA%\\Programs\\RPCS3\\rpcs3.exe"],
-                    "cli_args_file": ["--fullscreen", "{target}"]
+                    "cli_args_file": ["--no-gui", "--fullscreen", "{target}"]
                 },
                 "xbox360": {
                     "name": "Xenia",
@@ -102,7 +102,7 @@ class TestLibraryMetadataAndWindows(unittest.TestCase):
 
         # PS3 command
         cmd_ps3 = launcher.build_command_file("PS3", "C:\\Games\\ac4.dec.iso", "C:\\rpcs3\\rpcs3.exe")
-        self.assertEqual(cmd_ps3, ["C:\\rpcs3\\rpcs3.exe", "--fullscreen", "C:\\Games\\ac4.dec.iso"])
+        self.assertEqual(cmd_ps3, ["C:\\rpcs3\\rpcs3.exe", "--no-gui", "--fullscreen", "C:\\Games\\ac4.dec.iso"])
 
         # Xbox 360 command
         cmd_x360 = launcher.build_command_file("XBOX360", "C:\\Games\\fifa18.iso", "C:\\xenia\\xenia.exe")

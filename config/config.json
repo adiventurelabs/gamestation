@@ -79,10 +79,12 @@
         "emulators\\RPCS3\\rpcs3.exe"
       ],
       "cli_args_disc": [
+        "--no-gui",
         "--fullscreen",
         "{target}"
       ],
       "cli_args_file": [
+        "--no-gui",
         "--fullscreen",
         "{target}"
       ],
