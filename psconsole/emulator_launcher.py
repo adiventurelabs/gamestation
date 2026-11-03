@@ -49,20 +49,124 @@ class EmulatorLauncher:
         self.is_simulated: bool = False
         self.saved_launcher_hwnd: int = 0
 
+    def _is_network_or_noexec_path(self, path: str) -> bool:
+        """Determines if a path is on a network mount (CIFS/NFS/etc.) or has noexec on Linux."""
+        if is_windows():
+            return False
+
+        if os.path.isfile(path) and not os.access(path, os.X_OK):
+            return True
+
+        if os.path.exists("/proc/mounts"):
+            try:
+                target_path = os.path.realpath(path)
+                matching_mount = ""
+                matching_opts: List[str] = []
+                matching_fstype = ""
+
+                with open("/proc/mounts", "r", encoding="utf-8", errors="ignore") as f:
+                    for line in f:
+                        parts = line.strip().split()
+                        if len(parts) >= 4:
+                            mount_point = parts[1]
+                            fstype = parts[2].lower()
+                            opts = parts[3].split(",")
+                            if target_path.startswith(mount_point) and len(mount_point) > len(matching_mount):
+                                matching_mount = mount_point
+                                matching_opts = opts
+                                matching_fstype = fstype
+
+                if "noexec" in matching_opts:
+                    return True
+
+                network_fs = {"cifs", "smbfs", "nfs", "nfs4", "fuse.sshfs", "sshfs", "vboxsf", "vmhgfs", "afpfs"}
+                if matching_fstype in network_fs:
+                    return True
+            except Exception:
+                pass
+
+        return False
+
+    def _cache_executable_locally(self, src_path: str) -> str:
+        """Copies an emulator binary to local user storage (~/.local/share/gamestation/emulators/)
+        and marks it executable to bypass network share and noexec restrictions."""
+        if is_windows() or not os.path.isfile(src_path) or src_path.lower().endswith(".exe"):
+            return src_path
+
+        local_dir = os.path.expanduser("~/.local/share/gamestation/emulators")
+        try:
+            os.makedirs(local_dir, exist_ok=True)
+            dest_path = os.path.join(local_dir, os.path.basename(src_path))
+
+            # Fast reuse if cached copy exists with matching file size
+            if os.path.isfile(dest_path):
+                try:
+                    if os.path.getsize(dest_path) == os.path.getsize(src_path):
+                        os.chmod(dest_path, 0o755)
+                        if os.access(dest_path, os.X_OK):
+                            return dest_path
+                except Exception:
+                    pass
+
+            if self.logger:
+                self.logger.info(f"Caching emulator binary locally: {src_path} -> {dest_path}")
+            shutil.copy2(src_path, dest_path)
+            os.chmod(dest_path, 0o755)
+            return dest_path
+        except Exception as e:
+            if self.logger:
+                self.logger.warning(f"Could not cache emulator locally ({src_path} -> {local_dir}): {e}")
+            return src_path
+
+    def _ensure_local_executable(self, target: str) -> str:
+        """Validates that a binary is executable on Linux/macOS.
+        If the file lacks +x permissions or is hosted on a network mount or noexec
+        filesystem, safely caches it to ~/.local/share/gamestation/emulators/
+        and grants execution permissions."""
+        if is_windows() or not os.path.isfile(target):
+            return target
+
+        if target.lower().endswith(".exe"):
+            return target
+
+        # Attempt chmod +x in place
+        try:
+            current_mode = os.stat(target).st_mode
+            if not (current_mode & 0o111):
+                os.chmod(target, current_mode | 0o755)
+        except Exception:
+            pass
+
+        # If it's already executable on a local non-noexec filesystem, use directly
+        if os.access(target, os.X_OK) and not self._is_network_or_noexec_path(target):
+            return target
+
+        return self._cache_executable_locally(target)
+
     def find_emulator_executable(self, platform_name: str) -> Optional[str]:
         """Resolves existing emulator executable path for PS1, PS2, PS3, PS4, Xbox 360, Wii U, etc."""
         key = platform_name.lower()
         emu_cfg = self.config.get("emulators", {}).get(key, {})
         candidates = emu_cfg.get("executable_candidates", [])
 
-        # On non-Windows OS, prefer native Linux/macOS binaries first if present in candidates
+        # On non-Windows OS, first check if user already has a local executable in ~/.local/bin or ~/.local/share/gamestation/emulators
         if not is_windows():
+            local_fast_checks = [
+                os.path.expanduser(f"~/.local/bin/{key}"),
+                os.path.expanduser(f"~/.local/bin/{key}_canary"),
+                os.path.expanduser(f"~/.local/share/gamestation/emulators/{key}.AppImage"),
+                os.path.expanduser(f"~/.local/share/gamestation/emulators/{key}_canary.AppImage"),
+            ]
+            for lpath in local_fast_checks:
+                if os.path.isfile(lpath) and os.access(lpath, os.X_OK):
+                    return lpath
+
             for candidate in candidates:
                 resolved = expand_windows_path(candidate)
                 if not os.path.isabs(resolved):
                     resolved = os.path.join(self.project_root, resolved)
                 if not resolved.lower().endswith(".exe") and os.path.isfile(resolved):
-                    return resolved
+                    return self._ensure_local_executable(resolved)
 
         # Standard candidate check
         for candidate in candidates:
@@ -70,6 +174,8 @@ class EmulatorLauncher:
             if not os.path.isabs(resolved):
                 resolved = os.path.join(self.project_root, resolved)
             if os.path.isfile(resolved):
+                if not is_windows() and not resolved.lower().endswith(".exe"):
+                    return self._ensure_local_executable(resolved)
                 return resolved
 
         # Extended candidate names for Windows and Linux
@@ -369,6 +475,10 @@ class EmulatorLauncher:
 
             env = os.environ.copy()
             env["APPIMAGE_EXTRACT_AND_RUN"] = "1"
+            if not is_windows():
+                local_tmp = os.path.expanduser("~/.cache/gamestation/tmp")
+                os.makedirs(local_tmp, exist_ok=True)
+                env["TMPDIR"] = local_tmp
 
             proc = subprocess.Popen(
                 cmd,
@@ -386,6 +496,43 @@ class EmulatorLauncher:
                 emulator_name=emu_name,
                 command=cmd,
                 process=proc
+            )
+        except PermissionError as pe:
+            if not is_windows() and cmd and cmd[0] != "flatpak":
+                if self.logger:
+                    self.logger.warning(f"Permission denied launching {cmd[0]}: {pe}. Auto-recovering to local storage...")
+                cached = self._cache_executable_locally(cmd[0])
+                if cached and cached != cmd[0]:
+                    try:
+                        cmd[0] = cached
+                        emu_dir = os.path.dirname(cached)
+                        proc = subprocess.Popen(
+                            cmd,
+                            cwd=emu_dir,
+                            env=env,
+                            creationflags=creation_flags,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                        self.active_process = proc
+                        self.active_target = target_desc
+                        if self.logger:
+                            self.logger.info(f"Successfully launched {emu_name} via cached local executable: {cached}")
+                        return LaunchResult(
+                            status=LaunchStatus.SUCCESS,
+                            emulator_name=emu_name,
+                            command=cmd,
+                            process=proc
+                        )
+                    except Exception as retry_err:
+                        pe = retry_err
+            if self.logger:
+                self.logger.error(f"Failed to launch {emu_name}: {pe}")
+            return LaunchResult(
+                status=LaunchStatus.LAUNCH_FAILED,
+                emulator_name=emu_name,
+                command=cmd,
+                error_message=str(pe)
             )
         except Exception as e:
             if self.logger:

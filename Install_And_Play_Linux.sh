@@ -35,10 +35,13 @@ echo ""
 # -----------------------------------------------------------------------------
 echo -e "${GREEN}>>> [1/6] Checking system packages & dependencies...${NC}"
 
-# Ensure ~/.local/bin is in PATH and AppImages can run without FUSE conflicts
+# Ensure ~/.local/bin and local cache dirs exist and AppImages run without FUSE or noexec restrictions
 mkdir -p "$HOME/.local/bin"
-export PATH="$HOME/.local/bin:$PATH"
+mkdir -p "$HOME/.local/share/gamestation/emulators"
+mkdir -p "$HOME/.cache/gamestation/tmp"
+export PATH="$HOME/.local/bin:$HOME/.local/share/gamestation/emulators:$PATH"
 export APPIMAGE_EXTRACT_AND_RUN=1
+export TMPDIR="$HOME/.cache/gamestation/tmp"
 
 if command -v apt-get &>/dev/null; then
     echo -e "    [*] Verifying system packages via apt..."
@@ -92,65 +95,111 @@ echo -e "    ${GREEN}[OK]${NC} Python environment ready."
 # -----------------------------------------------------------------------------
 echo -e "\n${GREEN}>>> [3/6] Checking Emulators for Linux (AppImages)...${NC}"
 
+# Ensure permissions on any repository-bundled emulators
+chmod +x "$SCRIPT_DIR/emulators/linux/"*.AppImage 2>/dev/null || true
+
 # 3a. RPCS3 (PlayStation 3)
 if ! command -v rpcs3 &>/dev/null && [ ! -f "$HOME/.local/bin/rpcs3" ]; then
-    echo -e "    [*] Downloading RPCS3 (PlayStation 3 AppImage)..."
-    RPCS3_URL=$(curl -sL "https://api.github.com/repos/RPCS3/rpcs3-binaries-linux/releases/latest" | grep "browser_download_url" | grep -i "\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
-    [ -z "$RPCS3_URL" ] && RPCS3_URL="https://github.com/RPCS3/rpcs3-binaries-linux/releases/download/build-63996a47115563e433b909f2afc62d264e4b1314/rpcs3-v0.0.43-20560-63996a47_linux64.AppImage"
-    curl -L --fail --progress-bar -A "GameStation/Linux" "$RPCS3_URL" -o "$HOME/.local/bin/rpcs3" || true
-    chmod +x "$HOME/.local/bin/rpcs3" 2>/dev/null || true
+    if [ -f "$SCRIPT_DIR/emulators/linux/rpcs3.AppImage" ]; then
+        echo -e "    [*] Installing bundled RPCS3 AppImage to ~/.local/bin/rpcs3..."
+        cp "$SCRIPT_DIR/emulators/linux/rpcs3.AppImage" "$HOME/.local/bin/rpcs3"
+        chmod +x "$HOME/.local/bin/rpcs3" 2>/dev/null || true
+    else
+        echo -e "    [*] Downloading RPCS3 (PlayStation 3 AppImage)..."
+        RPCS3_URL=$(curl -sL "https://api.github.com/repos/RPCS3/rpcs3-binaries-linux/releases/latest" | grep "browser_download_url" | grep -i "\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
+        [ -z "$RPCS3_URL" ] && RPCS3_URL="https://github.com/RPCS3/rpcs3-binaries-linux/releases/download/build-63996a47115563e433b909f2afc62d264e4b1314/rpcs3-v0.0.43-20560-63996a47_linux64.AppImage"
+        curl -L --fail --progress-bar -A "GameStation/Linux" "$RPCS3_URL" -o "$HOME/.local/bin/rpcs3" || true
+        chmod +x "$HOME/.local/bin/rpcs3" 2>/dev/null || true
+    fi
     echo -e "    ${GREEN}[OK]${NC} RPCS3 installed to ~/.local/bin/rpcs3"
 else
+    chmod +x "$HOME/.local/bin/rpcs3" 2>/dev/null || true
     echo -e "    ${GREEN}[OK]${NC} RPCS3 is present."
 fi
 
 # 3b. Cemu (Nintendo Wii U)
 if ! command -v cemu &>/dev/null && [ ! -f "$HOME/.local/bin/cemu" ]; then
-    echo -e "    [*] Downloading Cemu (Nintendo Wii U AppImage)..."
-    CEMU_URL=$(curl -sL "https://api.github.com/repos/cemu-project/Cemu/releases/latest" | grep "browser_download_url" | grep -i "\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
-    [ -z "$CEMU_URL" ] && CEMU_URL="https://github.com/cemu-project/Cemu/releases/download/v2.6/Cemu-2.6-x86_64.AppImage"
-    curl -L --fail --progress-bar -A "GameStation/Linux" "$CEMU_URL" -o "$HOME/.local/bin/cemu" || true
-    chmod +x "$HOME/.local/bin/cemu" 2>/dev/null || true
+    if [ -f "$SCRIPT_DIR/emulators/linux/cemu.AppImage" ]; then
+        echo -e "    [*] Installing bundled Cemu AppImage to ~/.local/bin/cemu..."
+        cp "$SCRIPT_DIR/emulators/linux/cemu.AppImage" "$HOME/.local/bin/cemu"
+        chmod +x "$HOME/.local/bin/cemu" 2>/dev/null || true
+    else
+        echo -e "    [*] Downloading Cemu (Nintendo Wii U AppImage)..."
+        CEMU_URL=$(curl -sL "https://api.github.com/repos/cemu-project/Cemu/releases/latest" | grep "browser_download_url" | grep -i "\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
+        [ -z "$CEMU_URL" ] && CEMU_URL="https://github.com/cemu-project/Cemu/releases/download/v2.6/Cemu-2.6-x86_64.AppImage"
+        curl -L --fail --progress-bar -A "GameStation/Linux" "$CEMU_URL" -o "$HOME/.local/bin/cemu" || true
+        chmod +x "$HOME/.local/bin/cemu" 2>/dev/null || true
+    fi
     echo -e "    ${GREEN}[OK]${NC} Cemu installed to ~/.local/bin/cemu"
 else
+    chmod +x "$HOME/.local/bin/cemu" 2>/dev/null || true
     echo -e "    ${GREEN}[OK]${NC} Cemu is present."
 fi
 
 # 3c. Xenia Canary (Xbox 360)
 if ! command -v xenia &>/dev/null && ! command -v xenia_canary &>/dev/null && [ ! -f "$HOME/.local/bin/xenia" ]; then
-    echo -e "    [*] Downloading Xenia Canary (Xbox 360 AppImage)..."
-    XENIA_URL=$(curl -sL "https://api.github.com/repos/pkgforge-dev/xenia-canary-AppImage/releases/latest" | grep "browser_download_url" | grep -i "\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
-    if [ -n "$XENIA_URL" ]; then
-        curl -L --fail --progress-bar -A "GameStation/Linux" "$XENIA_URL" -o "$HOME/.local/bin/xenia" || true
+    if [ -f "$SCRIPT_DIR/emulators/linux/xenia_canary.AppImage" ]; then
+        echo -e "    [*] Installing bundled Xenia Canary AppImage to ~/.local/bin/xenia..."
+        cp "$SCRIPT_DIR/emulators/linux/xenia_canary.AppImage" "$HOME/.local/bin/xenia"
         chmod +x "$HOME/.local/bin/xenia" 2>/dev/null || true
-        echo -e "    ${GREEN}[OK]${NC} Xenia Canary installed to ~/.local/bin/xenia"
+    elif [ -f "$SCRIPT_DIR/emulators/linux/xenia.AppImage" ]; then
+        echo -e "    [*] Installing bundled Xenia AppImage to ~/.local/bin/xenia..."
+        cp "$SCRIPT_DIR/emulators/linux/xenia.AppImage" "$HOME/.local/bin/xenia"
+        chmod +x "$HOME/.local/bin/xenia" 2>/dev/null || true
+    else
+        echo -e "    [*] Downloading Xenia Canary (Xbox 360 AppImage)..."
+        XENIA_URL=$(curl -sL "https://api.github.com/repos/pkgforge-dev/xenia-canary-AppImage/releases/latest" | grep "browser_download_url" | grep -i "\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
+        if [ -n "$XENIA_URL" ]; then
+            curl -L --fail --progress-bar -A "GameStation/Linux" "$XENIA_URL" -o "$HOME/.local/bin/xenia" || true
+            chmod +x "$HOME/.local/bin/xenia" 2>/dev/null || true
+        fi
     fi
+    echo -e "    ${GREEN}[OK]${NC} Xenia Canary installed to ~/.local/bin/xenia"
 else
+    chmod +x "$HOME/.local/bin/xenia" 2>/dev/null || true
     echo -e "    ${GREEN}[OK]${NC} Xenia Canary is present."
 fi
 
 # 3d. DuckStation (PlayStation 1)
 if ! command -v duckstation &>/dev/null && [ ! -f "$HOME/.local/bin/duckstation" ]; then
-    echo -e "    [*] Downloading DuckStation (PS1 AppImage)..."
-    DUCK_URL="https://github.com/stenzek/duckstation/releases/download/latest/DuckStation-x64.AppImage"
-    curl -L --fail --progress-bar -A "GameStation/Linux" "$DUCK_URL" -o "$HOME/.local/bin/duckstation" || true
-    chmod +x "$HOME/.local/bin/duckstation" 2>/dev/null || true
+    if [ -f "$SCRIPT_DIR/emulators/linux/duckstation.AppImage" ]; then
+        echo -e "    [*] Installing bundled DuckStation AppImage to ~/.local/bin/duckstation..."
+        cp "$SCRIPT_DIR/emulators/linux/duckstation.AppImage" "$HOME/.local/bin/duckstation"
+        chmod +x "$HOME/.local/bin/duckstation" 2>/dev/null || true
+    else
+        echo -e "    [*] Downloading DuckStation (PS1 AppImage)..."
+        DUCK_URL="https://github.com/stenzek/duckstation/releases/download/latest/DuckStation-x64.AppImage"
+        curl -L --fail --progress-bar -A "GameStation/Linux" "$DUCK_URL" -o "$HOME/.local/bin/duckstation" || true
+        chmod +x "$HOME/.local/bin/duckstation" 2>/dev/null || true
+    fi
     echo -e "    ${GREEN}[OK]${NC} DuckStation installed to ~/.local/bin/duckstation"
 else
+    chmod +x "$HOME/.local/bin/duckstation" 2>/dev/null || true
     echo -e "    ${GREEN}[OK]${NC} DuckStation is present."
 fi
 
 # 3e. PCSX2 (PlayStation 2)
 if ! command -v pcsx2 &>/dev/null && [ ! -f "$HOME/.local/bin/pcsx2" ]; then
-    echo -e "    [*] Downloading PCSX2 (PS2 AppImage)..."
-    PCSX2_URL=$(curl -sL "https://api.github.com/repos/PCSX2/pcsx2/releases/latest" | grep "browser_download_url" | grep -i "linux-appimage.*\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
-    [ -z "$PCSX2_URL" ] && PCSX2_URL="https://github.com/PCSX2/pcsx2/releases/download/v2.8.2/pcsx2-v2.8.2-linux-appimage-x64-Qt.AppImage"
-    curl -L --fail --progress-bar -A "GameStation/Linux" "$PCSX2_URL" -o "$HOME/.local/bin/pcsx2" || true
-    chmod +x "$HOME/.local/bin/pcsx2" 2>/dev/null || true
+    if [ -f "$SCRIPT_DIR/emulators/linux/pcsx2.AppImage" ]; then
+        echo -e "    [*] Installing bundled PCSX2 AppImage to ~/.local/bin/pcsx2..."
+        cp "$SCRIPT_DIR/emulators/linux/pcsx2.AppImage" "$HOME/.local/bin/pcsx2"
+        chmod +x "$HOME/.local/bin/pcsx2" 2>/dev/null || true
+    else
+        echo -e "    [*] Downloading PCSX2 (PS2 AppImage)..."
+        PCSX2_URL=$(curl -sL "https://api.github.com/repos/PCSX2/pcsx2/releases/latest" | grep "browser_download_url" | grep -i "linux-appimage.*\.AppImage\"" | cut -d '"' -f 4 | head -n 1)
+        [ -z "$PCSX2_URL" ] && PCSX2_URL="https://github.com/PCSX2/pcsx2/releases/download/v2.8.2/pcsx2-v2.8.2-linux-appimage-x64-Qt.AppImage"
+        curl -L --fail --progress-bar -A "GameStation/Linux" "$PCSX2_URL" -o "$HOME/.local/bin/pcsx2" || true
+        chmod +x "$HOME/.local/bin/pcsx2" 2>/dev/null || true
+    fi
     echo -e "    ${GREEN}[OK]${NC} PCSX2 installed to ~/.local/bin/pcsx2"
 else
+    chmod +x "$HOME/.local/bin/pcsx2" 2>/dev/null || true
     echo -e "    ${GREEN}[OK]${NC} PCSX2 is present."
 fi
+
+# Ensure all binaries in local paths have executable permissions
+chmod +x "$HOME/.local/bin/"* 2>/dev/null || true
+chmod +x "$HOME/.local/share/gamestation/emulators/"* 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
 # STEP 4: Dual Controller Profiles

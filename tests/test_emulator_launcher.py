@@ -157,6 +157,34 @@ class TestEmulatorLauncher(unittest.TestCase):
         result = self.launcher.launch(disc_info)
         self.assertEqual(result.status, LaunchStatus.EMULATOR_NOT_FOUND)
 
+    def test_ensure_local_executable_handles_permissions(self):
+        """Verifies that non-executable AppImages on Linux/macOS are granted execute bits or cached."""
+        dummy_appimage = os.path.join(self.test_dir, "test_emu.AppImage")
+        with open(dummy_appimage, "wb") as f:
+            f.write(b"#!/bin/sh\necho OK\n")
+        # Strip execute permissions
+        os.chmod(dummy_appimage, 0o644)
+
+        result_path = self.launcher._ensure_local_executable(dummy_appimage)
+        self.assertTrue(os.path.isfile(result_path))
+        self.assertTrue(os.access(result_path, os.X_OK))
+
+    def test_cache_executable_locally(self):
+        """Verifies that _cache_executable_locally copies binary and sets 0755."""
+        source_bin = os.path.join(self.test_dir, "custom_xenia.AppImage")
+        with open(source_bin, "wb") as f:
+            f.write(b"MOCK_APPIMAGE_BINARY")
+        os.chmod(source_bin, 0o600)
+
+        cached_path = self.launcher._cache_executable_locally(source_bin)
+        self.assertTrue(os.path.isfile(cached_path))
+        self.assertTrue(os.access(cached_path, os.X_OK))
+        # Clean up cached test file
+        try:
+            os.remove(cached_path)
+        except Exception:
+            pass
+
 
 if __name__ == "__main__":
     unittest.main()
