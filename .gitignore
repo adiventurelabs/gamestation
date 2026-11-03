@@ -37,7 +37,9 @@ psconsole_overlay_state.pid
 # Ingested game library cache and ROM images
 library/
 Library/
+demo_games/
 *.iso
+*.dec.iso
 *.7z
 *.zip
 *.bin
@@ -47,3 +49,6 @@ Library/
 *.cso
 *.wbfs
 *.pbp
+*.xex
+*.xbe
+.library_cache.json
