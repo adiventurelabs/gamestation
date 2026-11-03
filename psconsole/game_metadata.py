@@ -15,6 +15,39 @@ from typing import Optional, Dict, Any
 
 # Curated high-fidelity metadata for library games
 KNOWN_METADATA: Dict[str, Dict[str, Any]] = {
+    "call of duty - modern warfare 3": {
+        "title": "Call of Duty: Modern Warfare 3",
+        "cover_art": "/covers/cod_mw3.png",
+        "genre": "First-Person Shooter / Military Action",
+        "players": "1-4 Players (Split-Screen Spec Ops & Versus)",
+        "developer": "Infinity Ward / Sledgehammer Games",
+        "publisher": "Activision",
+        "release_year": "2011",
+        "rating": "ESRB: Mature (17+)",
+        "description": "The world stands on the brink of destruction. Join Captain Price, Soap MacTavish, and Delta Force across New York, London, Paris, and Berlin in the explosive climax to the original Modern Warfare trilogy with legendary split-screen Survival and Spec Ops modes."
+    },
+    "call of duty: modern warfare 3": {
+        "title": "Call of Duty: Modern Warfare 3",
+        "cover_art": "/covers/cod_mw3.png",
+        "genre": "First-Person Shooter / Military Action",
+        "players": "1-4 Players (Split-Screen Spec Ops & Versus)",
+        "developer": "Infinity Ward / Sledgehammer Games",
+        "publisher": "Activision",
+        "release_year": "2011",
+        "rating": "ESRB: Mature (17+)",
+        "description": "The world stands on the brink of destruction. Join Captain Price, Soap MacTavish, and Delta Force across New York, London, Paris, and Berlin in the explosive climax to the original Modern Warfare trilogy with legendary split-screen Survival and Spec Ops modes."
+    },
+    "modern warfare 3": {
+        "title": "Call of Duty: Modern Warfare 3",
+        "cover_art": "/covers/cod_mw3.png",
+        "genre": "First-Person Shooter / Military Action",
+        "players": "1-4 Players (Split-Screen Spec Ops & Versus)",
+        "developer": "Infinity Ward / Sledgehammer Games",
+        "publisher": "Activision",
+        "release_year": "2011",
+        "rating": "ESRB: Mature (17+)",
+        "description": "The world stands on the brink of destruction. Join Captain Price, Soap MacTavish, and Delta Force across New York, London, Paris, and Berlin in the explosive climax to the original Modern Warfare trilogy with legendary split-screen Survival and Spec Ops modes."
+    },
     "dragon ball z - budokai hd collection": {
         "title": "Dragon Ball Z: Budokai HD Collection",
         "cover_art": "/covers/dbz_budokai_hd.jpg",
