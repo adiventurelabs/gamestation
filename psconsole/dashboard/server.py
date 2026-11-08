@@ -27,6 +27,13 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
         super().__init__(*args, directory=static_dir, **kwargs)
 
+    def end_headers(self):
+        """Inject cache-control headers across all responses to prevent stale browser caching of UI/scripts."""
+        self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
+        self.send_header("Pragma", "no-cache")
+        self.send_header("Expires", "0")
+        super().end_headers()
+
     def do_OPTIONS(self):
         """Handles browser pre-flight checks for CORS."""
         self.send_response(204)
@@ -194,6 +201,23 @@ class DashboardAPIHandler(SimpleHTTPRequestHandler):
         service = DashboardAPIHandler.service_ref
         if not service:
             self._send_json({"success": False, "error": "Service unavailable"}, status=503)
+            return
+
+        # Defensive Guard: Reject launch requests if a game is already actively running
+        is_running = False
+        if service and service.launcher and hasattr(service.launcher, "is_emulator_running"):
+            try:
+                is_running = (service.launcher.is_emulator_running() is True)
+            except Exception:
+                is_running = False
+        is_playing = bool(service and hasattr(service, "state") and getattr(service.state, "value", "") == "PLAYING")
+
+        if is_playing or is_running:
+            active_name = getattr(service.launcher, "active_target", None) or "Current Game"
+            self._send_json({
+                "success": False,
+                "error": f"A game session ('{active_name}') is already active. Please exit before launching a new game."
+            }, status=409)
             return
 
         launch_type = payload.get("type", "disc")

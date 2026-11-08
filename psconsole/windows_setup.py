@@ -243,22 +243,83 @@ def configure_rpcs3_controllers(target_dir: Optional[str] = None) -> List[str]:
         candidate_dirs.insert(0, sub)
 
     if is_win:
-        rpcs3_input_content = """# GameStation RPCS3 Dual Xbox One S Controller Profile
-Player 1 Input:
-  Handler: XInput
-  Device: "XInput/0"
-Player 2 Input:
-  Handler: XInput
-  Device: "XInput/1"
-"""
+        handler = "XInput"
+        device_p1 = '"XInput/0"'
+        device_p2 = '"XInput/1"'
     else:
-        rpcs3_input_content = """# GameStation RPCS3 Dual Xbox One S Controller Profile (Linux SDL)
+        handler = "SDL"
+        device_p1 = '""'
+        device_p2 = '""'
+
+    rpcs3_input_content = f"""# GameStation RPCS3 Dual Gamepad Configuration
 Player 1 Input:
-  Handler: SDL
-  Device: ""
+  Handler: {handler}
+  Device: {device_p1}
+  Profile: Default Profile
+  Config:
+    Left Stick Left: LS X-
+    Left Stick Down: LY+
+    Left Stick Right: LS X+
+    Left Stick Up: LY-
+    Right Stick Left: RS X-
+    Right Stick Down: RY+
+    Right Stick Right: RS X+
+    Right Stick Up: RY-
+    Start: Start
+    Select: Back
+    PS Button: Guide
+    Square: X
+    Cross: A
+    Circle: B
+    Triangle: Y
+    Left: Left
+    Down: Down
+    Right: Right
+    Up: Up
+    R1: RB
+    R2: RT
+    R3: RS
+    L1: LB
+    L2: LT
+    L3: LS
+  Left Stick Deadzone: 7100
+  Right Stick Deadzone: 7100
+  Left Trigger Threshold: 0
+  Right Trigger Threshold: 0
 Player 2 Input:
-  Handler: SDL
-  Device: ""
+  Handler: {handler}
+  Device: {device_p2}
+  Profile: Default Profile
+  Config:
+    Left Stick Left: LS X-
+    Left Stick Down: LY+
+    Left Stick Right: LS X+
+    Left Stick Up: LY-
+    Right Stick Left: RS X-
+    Right Stick Down: RY+
+    Right Stick Right: RS X+
+    Right Stick Up: RY-
+    Start: Start
+    Select: Back
+    PS Button: Guide
+    Square: X
+    Cross: A
+    Circle: B
+    Triangle: Y
+    Left: Left
+    Down: Down
+    Right: Right
+    Up: Up
+    R1: RB
+    R2: RT
+    R3: RS
+    L1: LB
+    L2: LT
+    L3: LS
+  Left Stick Deadzone: 7100
+  Right Stick Deadzone: 7100
+  Left Trigger Threshold: 0
+  Right Trigger Threshold: 0
 """
 
     for directory in candidate_dirs:
@@ -268,6 +329,12 @@ Player 2 Input:
         if target_dir or os.path.isdir(directory) or "rpcs3" in directory.lower():
             if write_file_safe(yml_path, rpcs3_input_content):
                 configured_paths.append(yml_path)
+
+            # Also write config_input.yml in the parent RPCS3 root folder
+            parent_dir = os.path.dirname(os.path.dirname(directory)) if "input_configs" in directory else directory
+            cfg_input = os.path.join(parent_dir, "config_input.yml")
+            if write_file_safe(cfg_input, rpcs3_input_content):
+                configured_paths.append(cfg_input)
 
     return configured_paths
 

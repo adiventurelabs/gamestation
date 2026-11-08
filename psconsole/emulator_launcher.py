@@ -556,19 +556,70 @@ class EmulatorLauncher:
                 error_message=str(e)
             )
 
+    def _is_any_emulator_process_alive(self) -> bool:
+        """Inspects running system processes to check if an emulator process is alive
+        even if the initial AppImage launcher wrapper process detached."""
+        known_emulators = {"rpcs3", "xenia", "xenia_canary", "cemu", "duckstation", "pcsx2", "mednafen"}
+        if is_windows():
+            try:
+                out = subprocess.check_output(["tasklist"], text=True, errors="ignore")
+                for emu in known_emulators:
+                    if emu in out.lower():
+                        return True
+            except Exception:
+                pass
+        else:
+            if os.path.exists("/proc"):
+                try:
+                    for pid in os.listdir("/proc"):
+                        if not pid.isdigit():
+                            continue
+                        try:
+                            comm_path = os.path.join("/proc", pid, "comm")
+                            if os.path.isfile(comm_path):
+                                with open(comm_path, "r", errors="ignore") as f:
+                                    comm = f.read().strip().lower()
+                                    for emu in known_emulators:
+                                        if emu in comm:
+                                            return True
+                            cmdline_path = os.path.join("/proc", pid, "cmdline")
+                            if os.path.isfile(cmdline_path):
+                                with open(cmdline_path, "r", errors="ignore") as f:
+                                    cmdline = f.read().replace("\x00", " ").lower()
+                                    for emu in known_emulators:
+                                        if emu in cmdline:
+                                            return True
+                        except (PermissionError, FileNotFoundError, ProcessLookupError):
+                            continue
+                except Exception:
+                    pass
+            try:
+                for emu in known_emulators:
+                    res = subprocess.run(["pgrep", "-f", emu], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    if res.returncode == 0:
+                        return True
+            except Exception:
+                pass
+        return False
+
     def is_emulator_running(self) -> bool:
         """Checks whether the currently managed emulator process is still active."""
         if self.is_simulated and self.active_target:
             return True
-        if not self.active_process:
-            return False
-        ret = self.active_process.poll()
-        if ret is not None:
+        if self.active_process:
+            ret = self.active_process.poll()
+            if ret is None:
+                return True
+            # AppImages on Linux can detach from wrapper PID into background child
+            if self.active_target and self._is_any_emulator_process_alive():
+                return True
             self.active_process = None
             self.active_target = None
             self.active_platform = None
             return False
-        return True
+        elif self.active_target and self._is_any_emulator_process_alive():
+            return True
+        return False
 
     def stop_active_emulator(self) -> bool:
         """Gracefully closes active emulator via WM_CLOSE, flushes saves, and restores focus."""
@@ -580,28 +631,34 @@ class EmulatorLauncher:
                 self.logger.info("Simulated gameplay session closed.")
             return True
 
-        if not self.active_process:
-            return True
+        if self.active_process:
+            pid = self.active_process.pid
+            if self.logger:
+                self.logger.info(f"Requesting clean exit for emulator PID: {pid}")
 
-        pid = self.active_process.pid
-        if self.logger:
-            self.logger.info(f"Requesting clean exit for emulator PID: {pid}")
+            closed_cleanly = close_process_windows(pid, timeout_seconds=4.0)
 
-        closed_cleanly = close_process_windows(pid, timeout_seconds=4.0)
-
-        if self.active_process.poll() is None:
-            if not closed_cleanly:
-                try:
-                    self.active_process.terminate()
-                    self.active_process.wait(timeout=2.0)
-                except Exception:
+            if self.active_process.poll() is None:
+                if not closed_cleanly:
                     try:
-                        self.active_process.kill()
+                        self.active_process.terminate()
+                        self.active_process.wait(timeout=2.0)
                     except Exception:
-                        pass
+                        try:
+                            self.active_process.kill()
+                        except Exception:
+                            pass
+
+        if not is_windows():
+            for emu in ["rpcs3", "xenia", "xenia_canary", "cemu", "duckstation", "pcsx2"]:
+                try:
+                    subprocess.run(["pkill", "-f", emu], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except Exception:
+                    pass
 
         self.active_process = None
         self.active_target = None
+        self.active_platform = None
         self.restore_launcher_focus()
         return True
 

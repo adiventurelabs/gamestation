@@ -216,10 +216,11 @@ else
 fi
 
 # -----------------------------------------------------------------------------
-# STEP 5: Dual Controller Profiles
+# STEP 5: Dual Controller Profiles (Xbox One, Series X|S, PS4/5, Generic)
 # -----------------------------------------------------------------------------
-echo -e "\n${GREEN}>>> [5/7] Pre-configuring Dual Gamepad Profiles...${NC}"
-$PY_EXEC -m psconsole.windows_setup || true
+echo -e "\n${GREEN}>>> [5/7] Auto-Configuring Gamepad Profiles for All Emulators...${NC}"
+echo -e "    [*] Applying SDL/evdev mappings for RPCS3, Xenia, DuckStation, PCSX2, and Cemu..."
+$PY_EXEC -c "from psconsole.windows_setup import setup_all_emulator_configs; res = setup_all_emulator_configs(); [print(f'        - {k.upper()}: {len(v)} config file(s) updated') for k, v in res.items()]" 2>/dev/null || $PY_EXEC -m psconsole.windows_setup || true
 
 # -----------------------------------------------------------------------------
 # STEP 6: Create Linux Desktop Launcher Shortcut
@@ -250,20 +251,21 @@ fi
 # -----------------------------------------------------------------------------
 echo -e "\n${GREEN}>>> [7/7] Launching GameStation Console Service & UI...${NC}"
 
-# Start browser in app/kiosk mode
+# Start browser in clean fullscreen mode without disk caching
 launch_browser() {
     sleep 1.5
     local URL="http://localhost:8088"
+    local FLAGS="--app=$URL --start-fullscreen --disable-features=Translate,OptimizationHints --disable-session-crashed-bubble --no-first-run --incognito"
     if command -v google-chrome &>/dev/null; then
-        google-chrome --app="$URL" --start-fullscreen &>/dev/null &
+        google-chrome $FLAGS &>/dev/null &
     elif command -v chromium &>/dev/null; then
-        chromium --app="$URL" --start-fullscreen &>/dev/null &
+        chromium $FLAGS &>/dev/null &
     elif command -v chromium-browser &>/dev/null; then
-        chromium-browser --app="$URL" --start-fullscreen &>/dev/null &
+        chromium-browser $FLAGS &>/dev/null &
     elif command -v brave-browser &>/dev/null; then
-        brave-browser --app="$URL" --start-fullscreen &>/dev/null &
+        brave-browser $FLAGS &>/dev/null &
     elif command -v firefox &>/dev/null; then
-        firefox --kiosk "$URL" &>/dev/null &
+        firefox --kiosk --private-window "$URL" &>/dev/null &
     elif command -v xdg-open &>/dev/null; then
         xdg-open "$URL" &>/dev/null &
     fi

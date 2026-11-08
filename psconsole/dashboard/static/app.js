@@ -6,6 +6,7 @@
 
 // Global State
 let isGameActive = false;
+let gameLaunchTimestamp = 0;
 let currentIndex = 0;
 let cards = [];
 let allLibraryGames = [];
@@ -371,7 +372,13 @@ function updateHeroDetails() {
 // 4. Game Launch Execution
 // ==========================================================================
 async function launchSelectedGame() {
+    if (isGameActive || (gameplayViewport && gameplayViewport.classList.contains("active"))) {
+        console.warn("Launch blocked: Active gameplay session currently in progress.");
+        return;
+    }
     playLaunchSound();
+    isGameActive = true;
+    gameLaunchTimestamp = Date.now();
 
     if (currentIndex === 0) {
         // Launch Physical Disc
@@ -464,11 +471,19 @@ async function fetchStatus() {
         const data = await res.json();
 
         // Update Gameplay Session Viewport
-        isGameActive = Boolean(data.is_playing);
+        const now = Date.now();
+        const inLaunchGracePeriod = (now - gameLaunchTimestamp) < 8000;
+
         if (data.is_playing) {
+            isGameActive = true;
+        } else if (!inLaunchGracePeriod) {
+            isGameActive = false;
+        }
+
+        if (isGameActive) {
             gameplayViewport.classList.add("active");
-            gameplayTitle.textContent = data.active_game || "Console Game";
-            gameplayLargeTitle.textContent = data.active_game || "Console Game";
+            gameplayTitle.textContent = data.active_game || gameplayTitle.textContent || "Console Game";
+            gameplayLargeTitle.textContent = data.active_game || gameplayLargeTitle.textContent || "Console Game";
             const plat = (data.active_platform || "CONSOLE").toUpperCase();
             gameplayPlatform.textContent = plat;
             const iconMap = {
@@ -730,7 +745,8 @@ function pollGamepad() {
     // CRITICAL: When a game is active or browser window is in the background,
     // suppress all UI navigation and button presses so gameplay inputs
     // go exclusively to the running emulator and never trigger menu launches!
-    if (isGameActive || document.hidden || (typeof document.hasFocus === "function" && !document.hasFocus())) {
+    const isViewportActive = gameplayViewport && gameplayViewport.classList.contains("active");
+    if (isGameActive || isViewportActive || document.hidden || (typeof document.hasFocus === "function" && !document.hasFocus())) {
         requestAnimationFrame(pollGamepad);
         return;
     }
@@ -956,6 +972,9 @@ window.addEventListener("DOMContentLoaded", () => {
     if (btnExitGameplay) {
         btnExitGameplay.addEventListener("click", async () => {
             initAudio();
+            isGameActive = false;
+            gameLaunchTimestamp = 0;
+            if (gameplayViewport) gameplayViewport.classList.remove("active");
             await fetch("/api/exit", { method: "POST" });
             setTimeout(fetchStatus, 200);
         });
@@ -964,6 +983,8 @@ window.addEventListener("DOMContentLoaded", () => {
         btnExitGameplayReturn.addEventListener("click", async () => {
             initAudio();
             isGameActive = false;
+            gameLaunchTimestamp = 0;
+            if (gameplayViewport) gameplayViewport.classList.remove("active");
             await fetch("/api/exit", { method: "POST" });
             setTimeout(fetchStatus, 200);
         });
