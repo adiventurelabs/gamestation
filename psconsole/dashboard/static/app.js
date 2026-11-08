@@ -5,6 +5,7 @@
  */
 
 // Global State
+let isGameActive = false;
 let currentIndex = 0;
 let cards = [];
 let allLibraryGames = [];
@@ -380,6 +381,7 @@ async function launchSelectedGame() {
             return;
         }
         try {
+            isGameActive = true;
             showToast(`Loading ${discState.title}...`, "info", "💿");
             const res = await fetch("/api/launch", {
                 method: "POST",
@@ -388,11 +390,14 @@ async function launchSelectedGame() {
             });
             const data = await res.json();
             if (data.success) {
+                isGameActive = true;
                 setTimeout(fetchStatus, 150);
             } else {
+                isGameActive = false;
                 showToast(`Could not start disc: ${data.error || data.status}`, "error", "⚠️");
             }
         } catch (e) {
+            isGameActive = false;
             console.error("Launch error:", e);
             showToast("Failed to communicate with console service.", "error", "⚠️");
         }
@@ -402,6 +407,7 @@ async function launchSelectedGame() {
         if (!game) return;
 
         try {
+            isGameActive = true;
             showToast(`Starting ${game.title}...`, "info", "🎮");
             const res = await fetch("/api/launch", {
                 method: "POST",
@@ -415,11 +421,14 @@ async function launchSelectedGame() {
             });
             const data = await res.json();
             if (data.success) {
+                isGameActive = true;
                 setTimeout(fetchStatus, 150);
             } else {
+                isGameActive = false;
                 showToast(`Could not launch ${game.title}: ${data.error || data.status}`, "error", "⚠️");
             }
         } catch (e) {
+            isGameActive = false;
             console.error("Launch error:", e);
             showToast("Failed to communicate with console service.", "error", "⚠️");
         }
@@ -455,6 +464,7 @@ async function fetchStatus() {
         const data = await res.json();
 
         // Update Gameplay Session Viewport
+        isGameActive = Boolean(data.is_playing);
         if (data.is_playing) {
             gameplayViewport.classList.add("active");
             gameplayTitle.textContent = data.active_game || "Console Game";
@@ -712,12 +722,23 @@ let buttonPressed = {};
 function pollGamepad() {
     const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
     let anyConnected = false;
+    for (let i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) anyConnected = true;
+    }
+    updateControllerStatus(anyConnected);
+
+    // CRITICAL: When a game is active or browser window is in the background,
+    // suppress all UI navigation and button presses so gameplay inputs
+    // go exclusively to the running emulator and never trigger menu launches!
+    if (isGameActive || document.hidden || (typeof document.hasFocus === "function" && !document.hasFocus())) {
+        requestAnimationFrame(pollGamepad);
+        return;
+    }
 
     // Check all connected gamepads (Player 1, Player 2, etc.)
     for (let i = 0; i < gamepads.length; i++) {
         const gp = gamepads[i];
         if (!gp) continue;
-        anyConnected = true;
 
         const now = Date.now();
 
@@ -810,6 +831,9 @@ function pollGamepad() {
 // 7. Keyboard Navigation (Arrows, Enter, Escape)
 // ==========================================================================
 window.addEventListener("keydown", (e) => {
+    // Suppress keyboard UI navigation while a game is active (allow Escape to exit)
+    if (isGameActive && e.key !== "Escape") return;
+
     // Prevent carousel jumping while typing in search box
     if (document.activeElement === searchInput) {
         if (e.key === "Escape") {
@@ -845,6 +869,10 @@ function updateClock() {
     const d = new Date();
     systemClock.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+
+window.addEventListener("focus", () => {
+    fetchStatus();
+});
 
 // ==========================================================================
 // Initialization & Touch / Remote Controls
@@ -935,6 +963,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if (btnExitGameplayReturn) {
         btnExitGameplayReturn.addEventListener("click", async () => {
             initAudio();
+            isGameActive = false;
             await fetch("/api/exit", { method: "POST" });
             setTimeout(fetchStatus, 200);
         });

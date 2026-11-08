@@ -13,10 +13,12 @@ import ctypes
 from typing import Dict, List, Any, Optional
 
 try:
-    from psconsole.utils import expand_windows_path
+    from psconsole.utils import expand_windows_path, is_windows
 except ImportError:
     def expand_windows_path(p: str) -> str:
         return os.path.expandvars(p)
+    def is_windows() -> bool:
+        return sys.platform == "win32"
 
 
 def get_project_root() -> str:
@@ -47,22 +49,27 @@ def write_file_safe(file_path: str, content: str) -> bool:
 # ==============================================================================
 def configure_xenia_controllers(target_dir: Optional[str] = None) -> List[str]:
     """
-    Configures Xenia Canary TOML settings with native XInput dual-controller support,
+    Configures Xenia Canary TOML settings with native dual-controller support,
     borderless fullscreen, full game license unlocking, and English localization.
+    Uses XInput on Windows and SDL on Linux.
     """
     configured_paths = []
     project_root = get_project_root()
+    is_win = (target_dir is not None) or is_windows()
 
     candidate_dirs = [
         expand_windows_path(r"%LOCALAPPDATA%\Programs\xenia"),
         expand_windows_path(r"%LOCALAPPDATA%\xenia"),
         expand_windows_path(r"%USERPROFILE%\Documents\Xenia"),
+        os.path.expanduser("~/.config/xenia"),
+        os.path.expanduser("~/.local/share/xenia"),
         os.path.join(project_root, "emulators", "xenia")
     ]
     if target_dir:
         candidate_dirs.insert(0, target_dir)
 
-    xenia_toml_content = """# GameStation Automated Xenia Canary Configuration
+    hid_driver = "xinput" if is_win else "sdl"
+    xenia_toml_content = f"""# GameStation Automated Xenia Canary Configuration
 # Dual Xbox One S Controller & Living Room Console Mode
 
 [General]
@@ -70,9 +77,8 @@ fullscreen = true
 discord = false
 
 [HID]
-# Native Windows XInput (Xbox One S / Series X|S / 360 Controllers)
 # Controller 1 = Player 1, Controller 2 = Player 2 automatically
-hid = "xinput"
+hid = "{hid_driver}"
 
 [Content]
 # 1 = Unlocks full license for arcade and digital games (no demo timeouts)
@@ -90,11 +96,9 @@ window_mode = 1
     for directory in candidate_dirs:
         if not directory:
             continue
-        # Write config if the folder exists, or write to standard directories
         canary_cfg = os.path.join(directory, "xenia-canary.config.toml")
         standard_cfg = os.path.join(directory, "xenia.config.toml")
 
-        # Create dir if it's the target or LocalAppData
         if target_dir or os.path.isdir(directory) or "xenia" in directory.lower():
             if write_file_safe(canary_cfg, xenia_toml_content):
                 configured_paths.append(canary_cfg)
@@ -109,21 +113,25 @@ window_mode = 1
 # ==============================================================================
 def configure_duckstation_controllers(target_dir: Optional[str] = None) -> List[str]:
     """
-    Pre-configures DuckStation for dual Xbox One S controllers via XInput (Pad 1: XInput 0, Pad 2: XInput 1).
+    Pre-configures DuckStation for dual Xbox One S controllers via XInput (Windows) or SDL (Linux).
     """
     configured_paths = []
     project_root = get_project_root()
+    is_win = (target_dir is not None) or is_windows()
 
     candidate_dirs = [
         expand_windows_path(r"%USERPROFILE%\Documents\DuckStation"),
         expand_windows_path(r"%LOCALAPPDATA%\Programs\DuckStation"),
         expand_windows_path(r"%LOCALAPPDATA%\DuckStation"),
+        os.path.expanduser("~/.config/duckstation"),
+        os.path.expanduser("~/.local/share/duckstation"),
         os.path.join(project_root, "emulators", "DuckStation")
     ]
     if target_dir:
         candidate_dirs.insert(0, target_dir)
 
-    duckstation_ini_content = """[Main]
+    ctrl_type = "XInput" if is_win else "SDL"
+    duckstation_ini_content = f"""[Main]
 StartFullscreen = true
 PauseOnFocusLoss = false
 ConfirmPowerOff = false
@@ -134,12 +142,12 @@ MultitapMode = Disabled
 
 [Pad1]
 Type = AnalogController
-ControllerType = XInput
+ControllerType = {ctrl_type}
 ControllerIndex = 0
 
 [Pad2]
 Type = AnalogController
-ControllerType = XInput
+ControllerType = {ctrl_type}
 ControllerIndex = 1
 
 [Hotkeys]
@@ -163,37 +171,41 @@ ToggleFullscreen = None
 # ==============================================================================
 def configure_pcsx2_controllers(target_dir: Optional[str] = None) -> List[str]:
     """
-    Pre-configures PCSX2 Qt for dual Xbox One S controllers via XInput.
+    Pre-configures PCSX2 Qt for dual Xbox One S controllers via XInput (Windows) or SDL (Linux).
     """
     configured_paths = []
     project_root = get_project_root()
+    is_win = (target_dir is not None) or is_windows()
 
     candidate_dirs = [
         expand_windows_path(r"%LOCALAPPDATA%\Programs\PCSX2\inis"),
         expand_windows_path(r"%USERPROFILE%\Documents\PCSX2\inis"),
         expand_windows_path(r"%APPDATA%\PCSX2\inis"),
         expand_windows_path(r"%LOCALAPPDATA%\PCSX2\inis"),
+        os.path.expanduser("~/.config/PCSX2/inis"),
+        os.path.expanduser("~/.local/share/PCSX2/inis"),
         os.path.join(project_root, "emulators", "PCSX2", "inis")
     ]
     if target_dir:
         candidate_dirs.insert(0, os.path.join(target_dir, "inis") if not target_dir.endswith("inis") else target_dir)
 
-    pcsx2_ini_content = """[UI]
+    pad_section = "[Pad]\nEnableXInput = true\n" if is_win else "[Pad]\nEnableSDL = true\n"
+    binding_prefix = "XInput" if is_win else "SDL"
+
+    pcsx2_ini_content = f"""[UI]
 StartFullscreen = true
 InhibitScreensaver = true
 ConfirmShutdown = false
 PauseOnFocusLoss = false
 
-[Pad]
-EnableXInput = true
-
+{pad_section}
 [Pad1]
 Type = DualShock2
-AutoBindingPath = XInput-0
+AutoBindingPath = {binding_prefix}-0
 
 [Pad2]
 Type = DualShock2
-AutoBindingPath = XInput-1
+AutoBindingPath = {binding_prefix}-1
 """
 
     for directory in candidate_dirs:
@@ -212,28 +224,41 @@ AutoBindingPath = XInput-1
 # ==============================================================================
 def configure_rpcs3_controllers(target_dir: Optional[str] = None) -> List[str]:
     """
-    Pre-configures RPCS3 input profile mapping Player 1 to XInput/0 and Player 2 to XInput/1.
+    Pre-configures RPCS3 input profile mapping Player 1 to XInput/0 (Windows) or SDL (Linux).
     """
     configured_paths = []
     project_root = get_project_root()
+    is_win = (target_dir is not None) or is_windows()
 
     candidate_dirs = [
         expand_windows_path(r"%APPDATA%\rpcs3\input_configs\global"),
         expand_windows_path(r"%LOCALAPPDATA%\rpcs3\input_configs\global"),
         expand_windows_path(r"%LOCALAPPDATA%\Programs\RPCS3\input_configs\global"),
+        os.path.expanduser("~/.config/rpcs3/input_configs/global"),
+        os.path.expanduser("~/.var/app/net.rpcs3.RPCS3/config/rpcs3/input_configs/global"),
         os.path.join(project_root, "emulators", "RPCS3", "input_configs", "global")
     ]
     if target_dir:
         sub = os.path.join(target_dir, "input_configs", "global")
         candidate_dirs.insert(0, sub)
 
-    rpcs3_input_content = """# GameStation RPCS3 Dual Xbox One S Controller Profile
+    if is_win:
+        rpcs3_input_content = """# GameStation RPCS3 Dual Xbox One S Controller Profile
 Player 1 Input:
   Handler: XInput
   Device: "XInput/0"
 Player 2 Input:
   Handler: XInput
   Device: "XInput/1"
+"""
+    else:
+        rpcs3_input_content = """# GameStation RPCS3 Dual Xbox One S Controller Profile (Linux SDL)
+Player 1 Input:
+  Handler: SDL
+  Device: ""
+Player 2 Input:
+  Handler: SDL
+  Device: ""
 """
 
     for directory in candidate_dirs:
@@ -248,15 +273,60 @@ Player 2 Input:
 
 
 # ==============================================================================
-# 5. UNIFIED CONTROLLER CONFIGURATION RUNNER
+# 5. CEMU (WII U) CONTROLLER SETUP
+# ==============================================================================
+def configure_cemu_controllers(target_dir: Optional[str] = None) -> List[str]:
+    """Pre-configures Cemu for Xbox One controllers via SDL on Linux or XInput on Windows."""
+    configured_paths = []
+    project_root = get_project_root()
+    is_win = (target_dir is not None) or is_windows()
+
+    candidate_dirs = [
+        expand_windows_path(r"%LOCALAPPDATA%\Cemu\controllerProfiles"),
+        expand_windows_path(r"%APPDATA%\Cemu\controllerProfiles"),
+        os.path.expanduser("~/.config/Cemu/controllerProfiles"),
+        os.path.join(project_root, "emulators", "Cemu", "controllerProfiles")
+    ]
+    if target_dir:
+        candidate_dirs.insert(0, os.path.join(target_dir, "controllerProfiles") if not target_dir.endswith("controllerProfiles") else target_dir)
+
+    api_name = "XInput" if is_win else "SDLController"
+    cemu_profile_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<emulated_controller>
+    <type>Wii U GamePad</type>
+    <profile>GameStation Xbox Controller</profile>
+    <controller>
+        <api>{api_name}</api>
+        <rumble>1</rumble>
+        <axis>
+            <deadzone>0.15</deadzone>
+            <range>1</range>
+        </axis>
+    </controller>
+</emulated_controller>
+"""
+    for directory in candidate_dirs:
+        if not directory:
+            continue
+        xml_path = os.path.join(directory, "controller0.xml")
+        if target_dir or os.path.isdir(directory) or "cemu" in directory.lower():
+            if write_file_safe(xml_path, cemu_profile_content):
+                configured_paths.append(xml_path)
+
+    return configured_paths
+
+
+# ==============================================================================
+# 6. UNIFIED CONTROLLER CONFIGURATION RUNNER
 # ==============================================================================
 def setup_all_emulator_configs() -> Dict[str, List[str]]:
-    """Applies Dual Xbox One S XInput configurations across all emulators."""
+    """Applies Dual Xbox One S configurations across all emulators."""
     results = {
         "xenia": configure_xenia_controllers(),
         "duckstation": configure_duckstation_controllers(),
         "pcsx2": configure_pcsx2_controllers(),
-        "rpcs3": configure_rpcs3_controllers()
+        "rpcs3": configure_rpcs3_controllers(),
+        "cemu": configure_cemu_controllers()
     }
     return results
 

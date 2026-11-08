@@ -367,6 +367,12 @@ class EmulatorLauncher:
                 error_message=f"Missing BIOS file for {emu_name}. Please place BIOS in: {bios_dir}"
             )
 
+        try:
+            from .windows_setup import setup_all_emulator_configs
+            setup_all_emulator_configs()
+        except Exception:
+            pass
+
         cmd = self.build_command_disc(disc_info, exe_path)
         return self._spawn_process(cmd, emu_name, target_desc=disc_info.title)
 
@@ -433,6 +439,12 @@ class EmulatorLauncher:
                 command=[],
                 error_message=f"{emu_name} executable not found on system. Please install {emu_name} or run Install_And_Play_Helios.bat"
             )
+
+        try:
+            from .windows_setup import setup_all_emulator_configs
+            setup_all_emulator_configs()
+        except Exception:
+            pass
 
         cmd = self.build_command_file(platform, abs_target, exe_path)
         return self._spawn_process(cmd, emu_name, target_desc=title)
