@@ -229,6 +229,31 @@ if (-not (Test-Path $RPCS3Exe) -and -not $SkipEmulators) {
     Write-Host "    [OK] RPCS3 is present." -ForegroundColor Gray
 }
 
+# 4b-2. PlayStation 3 System Firmware (PS3UPDAT.PUP)
+$devFlash = "$env:LOCALAPPDATA\rpcs3\dev_flash"
+$bundledPup = "$PSScriptRoot\emulators\firmware\PS3UPDAT.PUP"
+$tempPup = "$env:TEMP\PS3UPDAT.PUP"
+if (-not (Test-Path "$devFlash\vsh") -and -not (Test-Path "$devFlash\sys") -and (Test-Path $RPCS3Exe)) {
+    Write-Host "    [*] Checking PlayStation 3 System Firmware..." -ForegroundColor Cyan
+    $pupTarget = $null
+    if (Test-Path $bundledPup) {
+        $pupTarget = $bundledPup
+    } else {
+        $pupUrl = "http://dus01.ps3.update.playstation.net/update/ps3/image/us/2026_0318_a2b60b6ac1d2e49e230144345616927c/PS3UPDAT.PUP"
+        try {
+            Download-FileWithRetry $pupUrl $tempPup
+            $pupTarget = $tempPup
+        } catch {
+            Write-Host "    [WARNING] Could not download PS3UPDAT.PUP: $_" -ForegroundColor Yellow
+        }
+    }
+    if ($pupTarget -and (Test-Path $pupTarget)) {
+        Write-Host "    [*] Launching RPCS3 to install PS3 firmware. Click 'Yes' when prompted, then close RPCS3." -ForegroundColor Yellow
+        Start-Process -FilePath $RPCS3Exe -ArgumentList "`"$pupTarget`"" -Wait
+        Write-Host "    [OK] PS3 Firmware installed successfully!" -ForegroundColor Green
+    }
+}
+
 # 4c. Cemu (Wii U)
 $CemuDir = "$ProgramsDir\Cemu"
 $CemuExe = "$CemuDir\Cemu.exe"

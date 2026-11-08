@@ -202,15 +202,29 @@ chmod +x "$HOME/.local/bin/"* 2>/dev/null || true
 chmod +x "$HOME/.local/share/gamestation/emulators/"* 2>/dev/null || true
 
 # -----------------------------------------------------------------------------
-# STEP 4: Dual Controller Profiles
+# STEP 4: PlayStation 3 System Firmware (PS3UPDAT.PUP)
 # -----------------------------------------------------------------------------
-echo -e "\n${GREEN}>>> [4/6] Pre-configuring Dual Gamepad Profiles...${NC}"
+echo -e "\n${GREEN}>>> [4/7] Checking PlayStation 3 System Firmware...${NC}"
+RPCS3_FLASH="$HOME/.config/rpcs3/dev_flash"
+if [ ! -d "$RPCS3_FLASH/vsh" ] && [ ! -d "$RPCS3_FLASH/sys" ]; then
+    echo -e "    ${YELLOW}[!] PS3 firmware not detected in ~/.config/rpcs3/dev_flash.${NC}"
+    if [ -f "$SCRIPT_DIR/Install_PS3_Firmware.sh" ]; then
+        "$SCRIPT_DIR/Install_PS3_Firmware.sh" || true
+    fi
+else
+    echo -e "    ${GREEN}[OK]${NC} PS3 firmware is already installed in ~/.config/rpcs3/dev_flash."
+fi
+
+# -----------------------------------------------------------------------------
+# STEP 5: Dual Controller Profiles
+# -----------------------------------------------------------------------------
+echo -e "\n${GREEN}>>> [5/7] Pre-configuring Dual Gamepad Profiles...${NC}"
 $PY_EXEC -m psconsole.windows_setup || true
 
 # -----------------------------------------------------------------------------
-# STEP 5: Create Linux Desktop Launcher Shortcut
+# STEP 6: Create Linux Desktop Launcher Shortcut
 # -----------------------------------------------------------------------------
-echo -e "\n${GREEN}>>> [5/6] Creating Desktop Launcher...${NC}"
+echo -e "\n${GREEN}>>> [6/7] Creating Desktop Launcher...${NC}"
 
 DESKTOP_ENTRY="[Desktop Entry]
 Name=GameStation Console
@@ -232,9 +246,9 @@ if [ -d "$HOME/Desktop" ]; then
 fi
 
 # -----------------------------------------------------------------------------
-# STEP 6: Launch Fullscreen Living Room Console UI
+# STEP 7: Launch Fullscreen Living Room Console UI
 # -----------------------------------------------------------------------------
-echo -e "\n${GREEN}>>> [6/6] Launching GameStation Console Service & UI...${NC}"
+echo -e "\n${GREEN}>>> [7/7] Launching GameStation Console Service & UI...${NC}"
 
 # Start browser in app/kiosk mode
 launch_browser() {
