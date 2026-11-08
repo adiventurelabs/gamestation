@@ -219,6 +219,31 @@ AutoBindingPath = {binding_prefix}-1
     return configured_paths
 
 
+def get_linux_gamepad_names() -> List[str]:
+    """Reads /proc/bus/input/devices on Linux to find all connected gamepads."""
+    gamepads = []
+    if os.path.exists("/proc/bus/input/devices"):
+        try:
+            with open("/proc/bus/input/devices", "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+            for block in content.split("\n\n"):
+                name = ""
+                handlers = ""
+                for line in block.splitlines():
+                    if line.startswith("N: Name="):
+                        name = line.split("=", 1)[1].strip('"').strip()
+                    elif line.startswith("H: Handlers="):
+                        handlers = line.split("=", 1)[1].strip()
+                if name and ("js" in handlers or "event" in handlers):
+                    lower = name.lower()
+                    if any(kw in lower for kw in ["xbox", "pad", "controller", "joystick", "sony", "dualsense", "dualshock", "nintendo"]):
+                        if name not in gamepads:
+                            gamepads.append(name)
+        except Exception:
+            pass
+    return gamepads
+
+
 # ==============================================================================
 # 4. RPCS3 (PS3) CONTROLLER SETUP
 # ==============================================================================
@@ -248,8 +273,13 @@ def configure_rpcs3_controllers(target_dir: Optional[str] = None) -> List[str]:
         device_p2 = '"XInput/1"'
     else:
         handler = "SDL"
-        device_p1 = '""'
-        device_p2 = '""'
+        linux_pads = get_linux_gamepad_names()
+        if linux_pads:
+            device_p1 = f'"{linux_pads[0]}"'
+            device_p2 = f'"{linux_pads[1]}"' if len(linux_pads) > 1 else f'"{linux_pads[0]}"'
+        else:
+            device_p1 = '"Microsoft X-Box One pad"'
+            device_p2 = '"Microsoft X-Box One pad"'
 
     rpcs3_input_content = f"""# GameStation RPCS3 Dual Gamepad Configuration
 Player 1 Input:
@@ -322,6 +352,13 @@ Player 2 Input:
   Right Trigger Threshold: 0
 """
 
+    gamecontrollerdb_content = (
+        "030000005e040000ea02000000010000,Microsoft X-Box One pad,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,\n"
+        "050000005e040000fd02000003090000,Xbox Wireless Controller,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,\n"
+        "030000005e0400008e02000014010000,Microsoft X-Box 360 pad,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,\n"
+        "030000005e040000120b000005050000,Xbox Series X Controller,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,\n"
+    )
+
     for directory in candidate_dirs:
         if not directory:
             continue
@@ -336,26 +373,33 @@ Player 2 Input:
             if write_file_safe(cfg_input, rpcs3_input_content):
                 configured_paths.append(cfg_input)
 
+            # Write gamecontrollerdb.txt to rpcs3 config directory
+            db_path = os.path.join(parent_dir, "gamecontrollerdb.txt")
+            write_file_safe(db_path, gamecontrollerdb_content)
+
     return configured_paths
 
 
 # ==============================================================================
-# 5. CEMU (WII U) CONTROLLER SETUP
+# 5. CEMU (WII U) CONTROLLER SETUP & CRASH PREVENTION
 # ==============================================================================
 def configure_cemu_controllers(target_dir: Optional[str] = None) -> List[str]:
-    """Pre-configures Cemu for Xbox One controllers via SDL on Linux or XInput on Windows."""
+    """Pre-configures Cemu for Xbox One controllers via SDL on Linux or XInput on Windows,
+    injects Super Smash Bros CPU single-core recompiler profile to prevent boot crashes,
+    and provisions settings.xml to bypass the setup wizard."""
     configured_paths = []
     project_root = get_project_root()
     is_win = (target_dir is not None) or is_windows()
 
     candidate_dirs = [
-        expand_windows_path(r"%LOCALAPPDATA%\Cemu\controllerProfiles"),
-        expand_windows_path(r"%APPDATA%\Cemu\controllerProfiles"),
-        os.path.expanduser("~/.config/Cemu/controllerProfiles"),
-        os.path.join(project_root, "emulators", "Cemu", "controllerProfiles")
+        expand_windows_path(r"%LOCALAPPDATA%\Cemu"),
+        expand_windows_path(r"%APPDATA%\Cemu"),
+        os.path.expanduser("~/.config/Cemu"),
+        os.path.expanduser("~/.local/share/Cemu"),
+        os.path.join(project_root, "emulators", "Cemu")
     ]
     if target_dir:
-        candidate_dirs.insert(0, os.path.join(target_dir, "controllerProfiles") if not target_dir.endswith("controllerProfiles") else target_dir)
+        candidate_dirs.insert(0, target_dir)
 
     api_name = "XInput" if is_win else "SDLController"
     cemu_profile_content = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -372,13 +416,59 @@ def configure_cemu_controllers(target_dir: Optional[str] = None) -> List[str]:
     </controller>
 </emulated_controller>
 """
-    for directory in candidate_dirs:
-        if not directory:
+    cemu_settings_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<settings>
+    <version>3</version>
+    <mlc_path>mlc01</mlc_path>
+    <check_update>false</check_update>
+    <discord_presence>false</discord_presence>
+    <fullscreen>true</fullscreen>
+    <Graphic>
+        <api>Vulkan</api>
+        <vsync>true</vsync>
+    </Graphic>
+    <Audio>
+        <api>Cubeb</api>
+    </Audio>
+</settings>
+"""
+    smash_game_profile = """# Super Smash Bros. for Wii U Game Profile
+# Forces Single-core recompiler to prevent immediate crash on boot
+[CPU]
+cpuMode = Singlecore-Recompiler
+"""
+
+    for base_dir in candidate_dirs:
+        if not base_dir:
             continue
-        xml_path = os.path.join(directory, "controller0.xml")
-        if target_dir or os.path.isdir(directory) or "cemu" in directory.lower():
+        # 1. Controller Profile
+        ctrl_dir = os.path.join(base_dir, "controllerProfiles")
+        xml_path = os.path.join(ctrl_dir, "controller0.xml")
+        if target_dir or os.path.isdir(base_dir) or "cemu" in base_dir.lower():
             if write_file_safe(xml_path, cemu_profile_content):
                 configured_paths.append(xml_path)
+
+        # 2. Settings.xml (Bypasses welcome wizard crash)
+        settings_path = os.path.join(base_dir, "settings.xml")
+        if target_dir or os.path.isdir(base_dir) or "cemu" in base_dir.lower():
+            if write_file_safe(settings_path, cemu_settings_xml):
+                configured_paths.append(settings_path)
+
+        # 3. Smash Bros Game Profile (Fixes CPU recompiler crash on USA & EUR titles)
+        for sub in ["gameProfiles", os.path.join("gameProfiles", "default")]:
+            gp_dir = os.path.join(base_dir, sub)
+            for title_id in ["0005000010144f00.ini", "0005000010145000.ini"]:
+                ini_p = os.path.join(gp_dir, title_id)
+                if target_dir or os.path.isdir(base_dir) or "cemu" in base_dir.lower():
+                    if write_file_safe(ini_p, smash_game_profile):
+                        configured_paths.append(ini_p)
+
+        # 4. MLC01 directory
+        mlc_dir = os.path.join(base_dir, "mlc01")
+        try:
+            os.makedirs(mlc_dir, exist_ok=True)
+        except Exception:
+            pass
 
     return configured_paths
 

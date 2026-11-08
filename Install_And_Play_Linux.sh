@@ -42,12 +42,13 @@ mkdir -p "$HOME/.cache/gamestation/tmp"
 export PATH="$HOME/.local/bin:$HOME/.local/share/gamestation/emulators:$PATH"
 export APPIMAGE_EXTRACT_AND_RUN=1
 export TMPDIR="$HOME/.cache/gamestation/tmp"
+export SDL_GAMECONTROLLERCONFIG="030000005e040000ea02000000010000,Microsoft X-Box One pad,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;050000005e040000fd02000003090000,Xbox Wireless Controller,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;030000005e0400008e02000014010000,Microsoft X-Box 360 pad,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;030000005e040000120b000005050000,Xbox Series X Controller,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;"
 
 if command -v apt-get &>/dev/null; then
     echo -e "    [*] Verifying system packages via apt..."
     sudo apt-get update -qq 2>/dev/null || true
-    sudo apt-get install -y python3 python3-pip python3-venv curl wget p7zip-full libfuse2t64 2>/dev/null || \
-    sudo apt-get install -y python3 python3-pip python3-venv curl wget p7zip-full libfuse2 2>/dev/null || true
+    sudo apt-get install -y python3 python3-pip python3-venv curl wget p7zip-full libfuse2t64 libvulkan1 mesa-vulkan-drivers libhidapi-hidraw0 2>/dev/null || \
+    sudo apt-get install -y python3 python3-pip python3-venv curl wget p7zip-full libfuse2 libvulkan1 mesa-vulkan-drivers libhidapi-hidraw0 2>/dev/null || true
 elif command -v dnf &>/dev/null; then
     echo -e "    [*] Verifying system packages via dnf..."
     sudo dnf install -y python3 python3-pip curl wget p7zip p7zip-plugins fuse-libs 2>/dev/null || true
@@ -130,9 +131,11 @@ if ! command -v cemu &>/dev/null && [ ! -f "$HOME/.local/bin/cemu" ]; then
         curl -L --fail --progress-bar -A "GameStation/Linux" "$CEMU_URL" -o "$HOME/.local/bin/cemu" || true
         chmod +x "$HOME/.local/bin/cemu" 2>/dev/null || true
     fi
+    mkdir -p "$HOME/.config/Cemu/gameProfiles/default" "$HOME/.local/share/Cemu/gameProfiles/default" "$HOME/.config/Cemu/controllerProfiles" "$HOME/.local/share/Cemu/mlc01" "$HOME/.config/Cemu/mlc01" 2>/dev/null || true
     echo -e "    ${GREEN}[OK]${NC} Cemu installed to ~/.local/bin/cemu"
 else
     chmod +x "$HOME/.local/bin/cemu" 2>/dev/null || true
+    mkdir -p "$HOME/.config/Cemu/gameProfiles/default" "$HOME/.local/share/Cemu/gameProfiles/default" "$HOME/.config/Cemu/controllerProfiles" "$HOME/.local/share/Cemu/mlc01" "$HOME/.config/Cemu/mlc01" 2>/dev/null || true
     echo -e "    ${GREEN}[OK]${NC} Cemu is present."
 fi
 

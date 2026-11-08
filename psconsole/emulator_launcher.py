@@ -482,6 +482,13 @@ class EmulatorLauncher:
             self.logger.info(f"Launching {emu_name} for '{target_desc}' with command: {' '.join(cmd)}")
 
         try:
+            # Auto-configure emulator controller profiles with currently active gamepads
+            try:
+                from .windows_setup import setup_all_emulator_configs
+                setup_all_emulator_configs()
+            except Exception:
+                pass
+
             creation_flags = 0x00000008 if is_windows() else 0  # DETACHED_PROCESS
             emu_dir = self.project_root if (cmd and cmd[0] == "flatpak") else (os.path.dirname(cmd[0]) if (cmd and os.path.isabs(cmd[0])) else self.project_root)
 
@@ -491,6 +498,12 @@ class EmulatorLauncher:
                 local_tmp = os.path.expanduser("~/.cache/gamestation/tmp")
                 os.makedirs(local_tmp, exist_ok=True)
                 env["TMPDIR"] = local_tmp
+                env["SDL_GAMECONTROLLERCONFIG"] = (
+                    "030000005e040000ea02000000010000,Microsoft X-Box One pad,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;"
+                    "050000005e040000fd02000003090000,Xbox Wireless Controller,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;"
+                    "030000005e0400008e02000014010000,Microsoft X-Box 360 pad,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;"
+                    "030000005e040000120b000005050000,Xbox Series X Controller,platform:Linux,a:b0,b:b1,x:b2,y:b3,back:b6,start:b7,guide:b8,leftstick:b9,rightstick:b10,leftshoulder:b4,rightshoulder:b5,dpup:h0.1,dpright:h0.2,dpdown:h0.4,dpleft:h0.8,leftx:a0,lefty:a1,rightx:a3,righty:a4,lefttrigger:a2,righttrigger:a5,;"
+                )
 
             proc = subprocess.Popen(
                 cmd,
